@@ -1,0 +1,26 @@
+name: Robô LiveDash
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: robo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Rodar o robô
+        env:
+          SB_URL: ${{ secrets.SB_URL }}
+          SB_KEY: ${{ secrets.SB_KEY }}
+        run: node robo-servidor.js

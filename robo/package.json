@@ -1,0 +1,7 @@
+{
+  "name": "livedash-robo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "start": "node robo-servidor.js" },
+  "dependencies": { "playwright": "^1.48.0" }
+}
