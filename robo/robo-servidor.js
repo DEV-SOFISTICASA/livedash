@@ -70,7 +70,28 @@ async function coletarLoja(loja, storageState) {
   return all;
 }
 
-async function gravarSupabase(loja, lives) {
+async function lerHistorico(loja) {
+  // lê o acumulado que já está no Supabase (pra fundir com a coleta nova)
+  const r = await fetch(SB_URL + '/rest/v1/livedash_state?key=eq.tts_lives:' + loja + '&select=data', {
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
+  });
+  if (r.status >= 300) return [];
+  const rows = await r.json();
+  return (rows[0] && rows[0].data && rows[0].data.lives) || [];
+}
+
+async function gravarSupabase(loja, colhidas) {
+  // MERGE por room_id: mantém o histórico antigo, atualiza as que voltaram, adiciona as novas
+  const antigas = await lerHistorico(loja);
+  const mapa = new Map();
+  for (const l of antigas) mapa.set(l.room_id, l);       // base = histórico guardado
+  let novas = 0, atualizadas = 0;
+  for (const l of colhidas) {
+    if (mapa.has(l.room_id)) atualizadas++; else novas++;
+    mapa.set(l.room_id, l);                                // coleta nova sobrescreve os números
+  }
+  const lives = Array.from(mapa.values()).sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
+
   const payload = { _type: 'tts_lives', loja, gerado_em: new Date().toISOString(), total: lives.length, lives };
   const r = await fetch(SB_URL + '/rest/v1/livedash_state', {
     method: 'POST',
@@ -78,6 +99,7 @@ async function gravarSupabase(loja, lives) {
     body: JSON.stringify({ key: 'tts_lives:' + loja, data: payload, updated_at: new Date().toISOString() }),
   });
   if (r.status >= 300) throw new Error('Supabase ' + r.status + ': ' + (await r.text()));
+  return { total: lives.length, novas, atualizadas, mantidas: lives.length - novas - atualizadas };
 }
 
 async function lerSessoes() {
@@ -104,8 +126,9 @@ async function lerSessoes() {
   for (const c of contas) {
     try {
       const lives = await coletarLoja(c.loja, c.storageState);
-      await gravarSupabase(c.loja, lives);
-      console.log('  OK', c.loja, '->', lives.length, 'lives | GMV R$', lives.reduce((s, l) => s + l.gmv, 0).toFixed(2));
+      const m = await gravarSupabase(c.loja, lives);
+      console.log('  OK', c.loja, '-> coletadas', lives.length, '| acumulado', m.total,
+        '(' + m.novas + ' novas, ' + m.atualizadas + ' atualizadas, ' + m.mantidas + ' guardadas)');
     } catch (e) {
       console.log('  FALHOU', c.loja, '->', e.message.slice(0, 100));
     }
