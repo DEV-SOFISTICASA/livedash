@@ -1376,11 +1376,8 @@ function editStoreLogo(storeId){
       const store = STORES.find(s=>s.id===storeId);
       if(!store) return;
       store.logo = ev.target.result;
-      try{ saveStores(); } catch(err){
-        toast('Erro','Imagem muito grande','err',3500);
-        delete store.logo;
-        return;
-      }
+      try{ saveStores(); } catch(err){}
+      if(store.cloudLoja && window.salvarMetaLoja){ window.salvarMetaLoja(store.cloudLoja, {logo: store.logo}); }
       renderStoreSelector();
       render();
       toast('Logo da loja salva',store.name,'ok',2500);
@@ -1607,6 +1604,7 @@ function renameStore(id, novoNome){
   if(!nome) return false;
   s.name = nome;
   saveStores();
+  if(s.cloudLoja && window.salvarMetaLoja){ window.salvarMetaLoja(s.cloudLoja, {name: nome}); }
   renderStoreSelector();
   try{ render(); }catch(e){}
   return true;
@@ -1618,6 +1616,7 @@ function recolorStore(id, cor){
   if(!s || !cor) return false;
   s.color = cor;
   saveStores();
+  if(s.cloudLoja && window.salvarMetaLoja){ window.salvarMetaLoja(s.cloudLoja, {color: cor}); }
   renderStoreSelector();
   try{ render(); }catch(e){}
   return true;
@@ -5653,16 +5652,41 @@ showTudo();
     return null;
   }
 
+  // metadados por loja (logo/cor/nome) — guardados em tts_meta:<loja>
+  async function lerMeta(){
+    var map = {};
+    try{
+      if(window.__ldSB){
+        var res = await window.__ldSB.from('livedash_state').select('key,data').like('key','tts_meta:%');
+        if(!res.error && res.data) res.data.forEach(function(r){ map[r.key.replace('tts_meta:','')] = r.data || {}; });
+      }
+    }catch(e){}
+    return map;
+  }
+  async function salvarMetaLoja(loja, patch){
+    if(!window.__ldSB || !loja) return;
+    var atual = {};
+    try{ var res = await window.__ldSB.from('livedash_state').select('data').eq('key','tts_meta:'+loja).maybeSingle(); if(res.data && res.data.data) atual = res.data.data; }catch(e){}
+    var novo = Object.assign({}, atual, patch);
+    try{ await window.__ldSB.from('livedash_state').upsert({ key:'tts_meta:'+loja, data:novo, updated_at:new Date().toISOString() }, { onConflict:'key' }); }catch(e){}
+  }
+  window.salvarMetaLoja = salvarMetaLoja;
+
   async function carregar(){
     try{
       var rows = await lerRows();
       if(!rows || !rows.length) return false;
+      var meta = await lerMeta();
       var lojas = rows.map(function(row, i){
         var lives = (row.data && row.data.lives) || [];
+        var loja = row.key.replace('tts_lives:','');
+        var m = meta[loja] || {};
         return {
           id: 'cloud_'+row.key.replace(/[^a-z0-9]/gi,''),
-          name: nomeLoja(row.key),
-          color: PAL[i % PAL.length],
+          cloudLoja: loja,
+          name: m.name || nomeLoja(row.key),
+          color: m.color || PAL[i % PAL.length],
+          logo: m.logo || undefined,
           regs: lives.map(regFromLive)
         };
       }).filter(function(s){ return s.regs.length; });
