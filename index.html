@@ -4873,8 +4873,9 @@ showTudo();
       body.innerHTML = ''
         + '<button class="acc-addstore" id="accAddStore">'
         +   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
-        +   'Adicionar loja'
+        +   'Conectar loja'
         + '</button>'
+        + '<div style="margin:0 20px 10px;font-size:11.5px;color:var(--text-3,#737373);line-height:1.5">Abre o <b>Conector</b> no seu PC. Se não abrir, ligue pelo atalho <b>Conector LiveDash</b> na área de trabalho.</div>'
         + '<div id="accStores"></div>';
       wireAddStore();
       renderStores();
@@ -5041,7 +5042,6 @@ showTudo();
     +   '<div class="acc-swatches">'+swatches+'</div>'
     +   '<div class="acc-sacts">'
     +     '<button class="acc-sbtn" data-act="logo">'+IC('camera')+' Logo</button>'
-    +     '<button class="acc-sbtn" data-act="sheet">↻ Planilha</button>'
     +     '<button class="acc-sbtn danger" data-act="del">'+IC('trash')+' Remover</button>'
     +   '</div>'
     + '</div>';
@@ -5092,8 +5092,6 @@ showTudo();
       // logo / planilha / remover
       var bLogo=card.querySelector('[data-act="logo"]');
       if(bLogo) bLogo.onclick=function(){ if(typeof editStoreLogo==='function') editStoreLogo(id); };
-      var bSheet=card.querySelector('[data-act="sheet"]');
-      if(bSheet) bSheet.onclick=function(){ if(typeof updateStoreSheet==='function') updateStoreSheet(id); };
       var bDel=card.querySelector('[data-act="del"]');
       if(bDel) bDel.onclick=function(){
         if(typeof delStore==='function') delStore(id);
@@ -5106,8 +5104,8 @@ showTudo();
   function wireAddStore(){
     var btn = dr && dr.querySelector('#accAddStore'); if(!btn) return;
     btn.onclick = function(){
-      var inp = document.getElementById('xlsxInput');
-      if(inp){ inp.click(); }
+      try{ window.open('http://localhost:9999','_blank'); }catch(e){}
+      try{ toast('Conector','Abrindo o Conector no seu PC. Se não abrir, use o atalho na área de trabalho.','ok',5000); }catch(e){}
     };
     // quando uma planilha nova é adicionada, atualiza o painel ao reabrir;
     // também escuta o input pra refletir na hora (sem fechar o drawer).
