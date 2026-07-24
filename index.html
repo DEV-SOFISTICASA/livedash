@@ -5621,7 +5621,7 @@ showTudo();
     var ctrFrac = +l.ctr || 0;                                  // fração (0.06)
     var ip = +l.impressions || 0;
     return {
-      id: l.room_id, t: grupo(l.title), tr: l.title, dt: dt, d: d, h: h, w: w,
+      id: l.room_id, t: l.title, tr: l.title, dt: dt, d: d, h: h, w: w,
       du: +l.duration_min || 0,
       g: +l.gmv || 0, it: +l.orders || 0, cu: +l.orders || 0,
       ao: (l.orders? (+l.gmv/+l.orders) : 0), or: +l.orders || 0,
