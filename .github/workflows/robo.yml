@@ -2,8 +2,9 @@ name: Robô LiveDash
 
 on:
   schedule:
-    - cron: '0 6 * * *'
-  workflow_dispatch:
+    - cron: '0 21 * * *'     # 18:00 no Brasil (21:00 UTC)
+    - cron: '0 2 * * *'      # 23:00 no Brasil (02:00 UTC do dia seguinte)
+  workflow_dispatch:          # botão "Run workflow" para rodar na hora
 
 jobs:
   coletar:
