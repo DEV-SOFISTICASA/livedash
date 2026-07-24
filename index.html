@@ -5637,7 +5637,7 @@ showTudo();
     };
   }
 
-  function nomeLoja(k){ var s=k.replace('tts_lives:',''); return s.charAt(0).toUpperCase()+s.slice(1); }
+  function nomeLoja(k){ return k.replace('tts_lives:','').toUpperCase(); }
 
   async function lerRows(){
     // usa o cliente logado do app (RLS libera pra usuário autenticado)

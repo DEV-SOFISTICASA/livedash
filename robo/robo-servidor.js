@@ -46,12 +46,13 @@ async function coletarLoja(loja, storageState) {
   while (!signedUrl && Date.now() - t0 < 45000) await page.waitForTimeout(1000);
   if (!signedUrl) { await browser.close(); throw new Error('nao capturou a URL assinada (sessao pode ter expirado)'); }
 
-  // pagina todas as lives replicando a URL assinada (paginacao vai no corpo)
+  // A API do TikTok so expoe os ultimos ~180 dias. Busca a janela maxima (179 dias).
   const end = Date.now();
-  const start = end - 90 * 86400 * 1000;
+  const start = end - 179 * 86400 * 1000;
+  const vistos = new Set();
   const all = [];
   let p = 1, total = 999;
-  while (all.length < total && p <= 30) {
+  while (all.length < total && p <= 60) {
     const body = JSON.stringify({
       time_selector: { time_range_period: 6, start_timestamp: String(start), end_timestamp: String(end), timezone: 'America/Sao_Paulo' },
       stats_types: STATS, page_number: p, page_size: 20, sort_key: 0, sort_order: 1,
@@ -60,7 +61,9 @@ async function coletarLoja(loja, storageState) {
     const j = await resp.json();
     if (j.code !== 0) throw new Error('API code ' + j.code + ': ' + j.message);
     total = j.data.total_count;
-    all.push(...(j.data.room_level_detail_data || []).map((x) => parseLive(x, loja)));
+    const rooms = j.data.room_level_detail_data || [];
+    if (!rooms.length) break;
+    for (const x of rooms) { if (!vistos.has(x.room_id)) { vistos.add(x.room_id); all.push(parseLive(x, loja)); } }
     p++;
   }
   await browser.close();
