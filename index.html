@@ -908,7 +908,7 @@ body{ font-family:'Manrope',system-ui,-apple-system,sans-serif !important; }
         <div class="ss-popover" id="ssPopover">
           <div class="ss-sheet-head">Trocar loja<span class="ss-sheet-close" onclick="closeStoreSheet()">✕</span></div><div id="ssList"><div style="padding:14px;text-align:center;color:var(--text-3);font-size:13px">Nenhuma loja adicionada</div></div>
           <div class="ss-actions">
-            <button class="ss-action-btn" onclick="document.getElementById(&#39;xlsxInput&#39;).click()">+ Adicionar loja</button>
+            <button class="ss-action-btn" onclick="if(window.recarregarNuvem)recarregarNuvem()">↻ Atualizar da nuvem</button>
           </div>
         </div>
       </div>
@@ -1569,7 +1569,6 @@ function renderStoreSelector(){
       ${logoHtml}
       <span class="name">${s.name}</span>
       <span class="count">${s.regs.length}</span>
-      <span class="ss-update" onclick="event.stopPropagation();updateStoreSheet('${s.id}')" title="Atualizar planilha"><svg class="ic ic-sm"><use href="#i-refresh"/></svg></span>
       <span class="logo-edit" onclick="event.stopPropagation();editStoreLogo('${s.id}')" title="Logo"><svg class="ic ic-sm"><use href="#i-camera"/></svg></span>
       <span class="del" onclick="event.stopPropagation();delStore('${s.id}')">✕</span>
     </div>`;
@@ -2247,7 +2246,7 @@ function renderEmptyState(){
     d.innerHTML = `<div class="empty-state">
       <h2>Nenhuma loja adicionada</h2>
       <p>Suba uma planilha .xlsx do TikTok para começar</p>
-      <button onclick="document.getElementById('xlsxInput').click()"><svg class="ic"><use href="#i-store"/></svg> Adicionar primeira loja</button>
+      <button onclick="if(window.recarregarNuvem)recarregarNuvem()"><svg class="ic"><use href="#i-refresh"/></svg> Carregar da nuvem</button>
     </div>`;
     var firstSec=document.querySelector('[data-tab-content="visao"]');
     if(firstSec) page.insertBefore(d, firstSec); else page.appendChild(d);
@@ -5278,6 +5277,7 @@ showTudo();
   if(!window.supabase || !window.supabase.createClient){ return; } // CDN nao carregou (ex: offline)
 
   const SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  try{ window.__ldSB = SB; }catch(e){}   // exposto pro carregador da nuvem (leitura autenticada)
   const TABLE = 'livedash_state';
   const LA_KEYS = ['la-stores','la-stores-stamp','la-premio','la-theme','la-accent','la-secorder','la-brand-logo'];
   let pushTimer=null, restoring=false, currentUser=null, lastPushedJSON='';
@@ -5588,6 +5588,110 @@ showTudo();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(build,120); });
   else setTimeout(build,120);
+})();
+</script>
+
+<script>
+/* ═══════ LiveDash · Carregador da nuvem (dados do robô) ═══════
+   Lê as lives coletadas pelo robô (chaves tts_lives:* em livedash_state)
+   e monta as lojas no painel. Substitui o upload manual de planilha. */
+(function(){
+  var URL_SB = 'https://nqgfxpbzybobzsrevvom.supabase.co';
+  var ANON = 'sb_publishable_9XkQ6Q8IDUF30qXXKmbp1w_xE2wMC02';
+  var PAL = (typeof PALETTE!=='undefined' && PALETTE.length) ? PALETTE : ['#8b5cf6','#3ecf8e','#ff6b6b','#fbbf24','#5fa8d3','#f472b6','#a78bfa','#fb923c'];
+
+  function grupo(T){
+    T = (T||'').toUpperCase();
+    if(T.includes('LUXO BARATO')) return 'LUXO BARATO';
+    if(T.includes('MANDACARU')) return 'KIT MANDACARU';
+    if(T.includes('FRANJA')) return 'KIT COZINHA FRANJAS';
+    if(T.includes('KIT') && T.includes('COZ') && T.includes('PROMO')) return 'KIT COZINHA PROMO';
+    if(T.includes('KIT') && (T.includes('COZ')||T.includes('COZINHA'))) return 'KIT COZINHA';
+    if(T.includes('KIT') && T.includes('TAPETE')) return 'KIT DE TAPETES';
+    if(T.includes('TAPETE')) return 'TAPETES';
+    if(T.includes('CAPA') && T.includes('ALMOFADA')) return 'CAPAS DE ALMOFADA';
+    if(T.includes('MANTA')) return 'MANTAS';
+    if(T.includes('VASO')) return 'VASOS';
+    return T.slice(0,30);
+  }
+  function regFromLive(l){
+    // started_at vem em UTC; converte pra horário do Brasil (UTC-3)
+    var d3 = new Date(new Date(l.started_at).getTime() - 3*3600*1000);
+    var dt = d3.toISOString().slice(0,16).replace('T',' ');    // 'YYYY-MM-DD HH:mm' (BR)
+    var d = dt.slice(0,10);
+    var h = parseInt(dt.slice(11,13),10) || 0;
+    var w = (new Date(d+'T00:00:00').getDay()+6)%7;
+    var ctrFrac = +l.ctr || 0;                                  // fração (0.06)
+    var ip = +l.impressions || 0;
+    return {
+      id: l.room_id, t: grupo(l.title), tr: l.title, dt: dt, d: d, h: h, w: w,
+      du: +l.duration_min || 0,
+      g: +l.gmv || 0, it: +l.orders || 0, cu: +l.orders || 0,
+      ao: (l.orders? (+l.gmv/+l.orders) : 0), or: +l.orders || 0,
+      v: +l.views || 0, ip: ip,
+      gh: +l.gmv_hour || 0,
+      ctr: ctrFrac*100, fr: 0,
+      pc: Math.round(ctrFrac*ip), pi: ip,
+      nf: 0, lk: 0, cm: 0, sh: 0,
+      avd: +l.avg_watch_s || 0
+    };
+  }
+
+  function nomeLoja(k){ var s=k.replace('tts_lives:',''); return s.charAt(0).toUpperCase()+s.slice(1); }
+
+  async function lerRows(){
+    // usa o cliente logado do app (RLS libera pra usuário autenticado)
+    if(window.__ldSB){
+      try{
+        var res = await window.__ldSB.from('livedash_state').select('key,data').like('key','tts_lives:%');
+        if(!res.error && res.data) return res.data;
+      }catch(e){}
+    }
+    // fallback: fetch anônimo (só funciona se o RLS liberar leitura pública)
+    try{
+      var r = await fetch(URL_SB + '/rest/v1/livedash_state?key=like.tts_lives:*&select=key,data', { headers:{ apikey:ANON, Authorization:'Bearer '+ANON } });
+      if(r.ok) return await r.json();
+    }catch(e){}
+    return null;
+  }
+
+  async function carregar(){
+    try{
+      var rows = await lerRows();
+      if(!rows || !rows.length) return false;
+      var lojas = rows.map(function(row, i){
+        var lives = (row.data && row.data.lives) || [];
+        return {
+          id: 'cloud_'+row.key.replace(/[^a-z0-9]/gi,''),
+          name: nomeLoja(row.key),
+          color: PAL[i % PAL.length],
+          regs: lives.map(regFromLive)
+        };
+      }).filter(function(s){ return s.regs.length; });
+      if(!lojas.length) return false;
+
+      // aplica no painel (só em memória — não mexe no armazenamento manual)
+      STORES = lojas;
+      CURRENT_STORE_ID = lojas[0].id;
+      try{ renderStoreSelector(); }catch(e){}
+      try{ buildPresets(); }catch(e){}
+      try{ render(); }catch(e){}
+      try{ renderComissao(); }catch(e){}
+      console.log('[nuvem] '+lojas.length+' loja(s) do robô carregada(s): '+lojas.map(function(s){return s.name+'('+s.regs.length+')';}).join(', '));
+      return true;
+    }catch(e){ console.warn('[nuvem] falhou', e); return false; }
+  }
+
+  window.recarregarNuvem = carregar;
+  // tenta algumas vezes ate o login/sync ficar pronto e vir dado
+  var tentativas = 0;
+  async function tentar(){
+    tentativas++;
+    var ok = await carregar();
+    if(!ok && tentativas < 12) setTimeout(tentar, 2500);   // ~30s de janela
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(tentar, 1500); });
+  else setTimeout(tentar, 1500);
 })();
 </script>
 </body></html>
