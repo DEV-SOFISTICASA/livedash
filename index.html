@@ -2005,24 +2005,23 @@ function getWeeksFromData(regs){
   return weeks.reverse();
 }
 
+// data de HOJE no fuso do Brasil (YYYY-MM-DD) — os filtros ancoram na data real, não na última live
+function hojeBR(){ return new Date().toLocaleDateString('en-CA', {timeZone:'America/Sao_Paulo'}); }
+function menosDias(iso, n){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); }
+
 function setFilter(f){
   CURRENT_FILTER = f;
-  const regs = getCurrentRegs();
-  const maxDate = regs.map(r=>r.d).sort().slice(-1)[0];
+  const maxDate = hojeBR();
 
   // Atualizar label do botão
   let label = 'Tudo';
   if(f.type==='all') label = 'Tudo';
   else if(f.type==='today'){
-    const [y,m,d] = (maxDate||'').split('-');
-    label = maxDate ? `Hoje · ${d}/${m}` : 'Hoje';
+    const [y,m,d] = maxDate.split('-');
+    label = `Hoje · ${d}/${m}`;
   } else if(f.type==='yesterday'){
-    if(maxDate){
-      const max = new Date(maxDate+'T00:00:00'); max.setDate(max.getDate()-1);
-      const y = max.toISOString().slice(0,10);
-      const [,mm,dd] = y.split('-');
-      label = `Ontem · ${dd}/${mm}`;
-    } else label = 'Ontem';
+    const [,mm,dd] = menosDias(maxDate,1).split('-');
+    label = `Ontem · ${dd}/${mm}`;
   } else if(f.type==='7d') label='Últimos 7 dias';
   else if(f.type==='30d') label='Últimos 30 dias';
   else if(f.type==='year' && f.value) label = 'Ano ' + f.value;
@@ -2061,19 +2060,13 @@ function setFilter(f){
 function filterRegs(regs, f){
   if(!regs || regs.length===0) return [];
   if(f.type==='all') return regs;
-  const maxDate = regs.map(r=>r.d).sort().slice(-1)[0];
-  if(f.type==='today') return regs.filter(r=>r.d===maxDate);
-  if(f.type==='yesterday'){
-    const max = new Date(maxDate+'T00:00:00'); max.setDate(max.getDate()-1);
-    const y = max.toISOString().slice(0,10);
-    return regs.filter(r=>r.d===y);
-  }
+  const hoje = hojeBR();
+  if(f.type==='today') return regs.filter(r=>r.d===hoje);
+  if(f.type==='yesterday') return regs.filter(r=>r.d===menosDias(hoje,1));
   if(f.type==='7d' || f.type==='30d'){
     const days = f.type==='7d' ? 7 : 30;
-    const max = new Date(maxDate+'T00:00:00');
-    max.setDate(max.getDate() - days + 1);
-    const cutoff = max.toISOString().slice(0,10);
-    return regs.filter(r=>r.d >= cutoff);
+    const cutoff = menosDias(hoje, days-1);
+    return regs.filter(r=>r.d >= cutoff && r.d <= hoje);
   }
   if(f.type==='year' && f.value) return regs.filter(r=>r.d.startsWith(f.value));
   if(f.type==='month' && f.value) return regs.filter(r=>r.d.startsWith(f.value));
@@ -5690,6 +5683,7 @@ showTudo();
           regs: lives.map(regFromLive)
         };
       }).filter(function(s){ return s.regs.length; });
+      lojas.sort(function(a,b){ return b.regs.length - a.regs.length; });  // mais lives primeiro
       if(!lojas.length) return false;
 
       // aplica no painel (só em memória — não mexe no armazenamento manual)
