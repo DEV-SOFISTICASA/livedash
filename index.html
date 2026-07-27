@@ -679,13 +679,25 @@ body.ed-on .ed-handle{cursor:grab}
 .ed-block[data-h="l"] .chart-wrap{min-height:430px;height:430px}
 .ed-block[data-h="l"] .chart-wrap.tall{min-height:470px;height:470px}
 @media(max-width:820px){.ed-grid>.ed-block{grid-column:1/-1!important}}
-.ed-tools{display:none;position:absolute;top:-13px;right:10px;z-index:31;gap:3px;background:var(--surface-3);border:1px solid var(--border-2);border-radius:9px;padding:3px 5px;box-shadow:var(--shadow);align-items:center}
+.ed-tools{display:none;position:absolute;top:-15px;right:10px;z-index:31;gap:3px;background:color-mix(in srgb,var(--surface) 96%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--border-2);border-radius:11px;padding:4px 6px;box-shadow:0 8px 22px -8px rgba(0,0,0,.5);align-items:center}
 body.ed-on .ed-tools{display:inline-flex}
-.ed-tools button{background:none;border:none;color:var(--text-3);font-size:10.5px;font-weight:700;cursor:pointer;padding:3px 7px;border-radius:6px;font-family:'JetBrains Mono',monospace;line-height:1;transition:all .12s}
+.ed-tools button{background:none;border:none;color:var(--text-3);font-size:11px;font-weight:700;cursor:pointer;padding:5px 9px;border-radius:8px;font-family:'Inter',sans-serif;line-height:1;min-width:28px;transition:all .12s}
 .ed-tools button:hover{color:var(--text);background:var(--surface-2)}
-.ed-tools button.on{color:#fff;background:var(--accent)}
-.ed-tools .sep{width:1px;height:13px;background:var(--border-2);margin:0 2px}
+.ed-tools button.on{color:#fff;background:var(--grad,var(--accent));box-shadow:0 3px 10px -3px var(--accent)}
+.ed-tools .sep{width:1px;height:16px;background:var(--border-2);margin:0 3px}
+.ed-tools .ed-lab{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-4);padding:0 2px 0 4px;cursor:default}
+.ed-tools .ed-lab:hover{background:none;color:var(--text-4)}
+.ed-tools .ed-x{color:var(--text-3)}
 .ed-tools .ed-x:hover{color:#fff;background:var(--neg)}
+/* Barra de SEÇÃO no editor (.active pra vencer a regra que esconde os títulos) */
+body.ed-on .tab-content.active>.tudo-section-head{display:flex!important;align-items:center;gap:10px;background:color-mix(in srgb,var(--accent) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 32%,var(--border));border-radius:12px;padding:9px 14px;margin:16px 0 12px;grid-column:1/-1}
+body.ed-on .tab-content.active>.tudo-section-head .sec-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-2)}
+.sec-ctrl{margin-left:auto;display:inline-flex;gap:6px}
+.sec-ctrl button{background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-2);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1}
+.sec-ctrl button:hover{color:var(--text);border-color:var(--border-hover)}
+.sec-ctrl .sec-hide:hover{color:#fff;background:var(--neg);border-color:var(--neg)}
+.tab-content.sec-hidden{display:none!important}
+#edSecTray{position:fixed;left:50%;transform:translateX(-50%);bottom:74px;z-index:2147483000;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border-2);border-radius:16px;padding:10px 14px;box-shadow:0 18px 50px rgba(0,0,0,.45);max-width:min(94vw,880px);flex-wrap:wrap;gap:8px;align-items:center}
 #edTray{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:2147483000;background:color-mix(in srgb, var(--surface) 94%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--border-2);border-radius:16px;padding:10px 14px;box-shadow:0 18px 50px rgba(0,0,0,.45);max-width:min(94vw,880px)}
 body.ed-on #edTray{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 #edTray .tr-lab{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-right:2px}
@@ -3511,7 +3523,7 @@ document.addEventListener('click',function(e){ const pop=document.getElementById
 const SEC_KEYS=['visao','dia','semana','quando','oque','performance','historico','lojas','comissao'];
 function secParent(){ const el=document.querySelector('[data-tab-content="visao"]'); return el?el.parentNode:null; }
 function secEl(p,k){ return p?p.querySelector(':scope > [data-tab-content="'+k+'"]'):null; }
-function reportSections(){ const p=secParent(); if(!p) return []; return SEC_KEYS.map(k=>secEl(p,k)).filter(Boolean); }
+function reportSections(){ const p=secParent(); if(!p) return []; return [].filter.call(p.children, function(el){ return el.getAttribute && SEC_KEYS.indexOf(el.getAttribute('data-tab-content')||'')>=0; }); }
 function saveSecOrder(){
   const ord=reportSections().map(s=>s.getAttribute('data-tab-content'));
   if(window.LiveLayout){ LiveLayout.init(); LiveLayout.setOrder(LiveLayout.editDevice(), ord); }
@@ -3531,6 +3543,11 @@ function applySecOrder(){
   finalOrder.forEach(k=>{ const el=secEl(p,k); if(el){ p.insertBefore(el,marker); } });
   const navEl=document.getElementById('tudoNav');
   if(navEl){ finalOrder.forEach(k=>{ const chip=navEl.querySelector('.tn-chip[data-go="'+k+'"]'); if(chip) navEl.appendChild(chip); }); }
+  // aplica seções ocultas
+  let ocultas=[];
+  try{ if(window.LiveLayout){ ocultas=LiveLayout.hidden(LiveLayout.editDevice()); } }catch(e){}
+  SEC_KEYS.forEach(k=>{ const el=secEl(p,k); if(el) el.classList.toggle('sec-hidden', ocultas.indexOf(k)>=0); });
+  try{ if(typeof edUpdateSecTray==='function') edUpdateSecTray(); }catch(e){}
 }
 function moveSec(key,dir){
   const p=secParent(); if(!p) return;
@@ -3540,7 +3557,42 @@ function moveSec(key,dir){
   if(dir>0) p.insertBefore(b,a); else p.insertBefore(a,b);
   saveSecOrder();
 }
-function initSecControls(){ /* setas de reordenar no dash removidas — reordenação fica só na config › Layout */ }
+function initSecControls(){ /* legado */ }
+
+// ── Editor de SEÇÕES: barra em cada seção pra reordenar/ocultar ──
+function edMountSectionBars(){
+  var p=secParent(); if(!p) return;
+  SEC_KEYS.forEach(function(k){
+    var sec=secEl(p,k); if(!sec) return;
+    var head=sec.querySelector(':scope > .tudo-section-head');
+    if(!head){ head=document.createElement('div'); head.className='tudo-section-head'; sec.insertBefore(head, sec.firstChild); }
+    head.setAttribute('data-seckey', k);
+    if(head.querySelector('.sec-ctrl')) return;
+    if(!head.querySelector('.sec-name')){ var nm=document.createElement('span'); nm.className='sec-name'; nm.textContent=(head.textContent.trim())||(window.LiveLayout?LiveLayout.label(k):k); head.textContent=''; head.appendChild(nm); }
+    var ctrl=document.createElement('div'); ctrl.className='sec-ctrl';
+    ctrl.innerHTML='<button data-secmove="-1" title="Subir seção">▲</button><button data-secmove="1" title="Descer seção">▼</button><button class="sec-hide" data-sechide title="Ocultar seção">✕ ocultar</button>';
+    head.appendChild(ctrl);
+  });
+}
+function ocultarSec(k){ if(!window.LiveLayout) return; var d=LiveLayout.editDevice(), h=LiveLayout.hidden(d); if(h.indexOf(k)<0){ h.push(k); LiveLayout.setHidden(d,h); } applySecOrder(); }
+function mostrarSec(k){ if(!window.LiveLayout) return; var d=LiveLayout.editDevice(); LiveLayout.setHidden(d, LiveLayout.hidden(d).filter(function(x){return x!==k;})); applySecOrder(); }
+function edUpdateSecTray(){
+  var tr=document.getElementById('edSecTray'); if(!tr) return;
+  var h=[]; try{ if(window.LiveLayout) h=LiveLayout.hidden(LiveLayout.editDevice()); }catch(e){}
+  var chips=h.map(function(k){ return '<button class="tr-chip" data-secshow="'+k+'"><span class="plus">+</span>'+(window.LiveLayout?LiveLayout.label(k):k)+'</button>'; }).join('');
+  tr.innerHTML='<span class="tr-lab">Seções ocultas</span>'+chips;
+  tr.style.display = (document.body.classList.contains('ed-on') && h.length) ? 'flex' : 'none';
+}
+function edInitSecTools(){
+  if(window.__edSecWired) return; window.__edSecWired=1;
+  if(!document.getElementById('edSecTray')){ var tr=document.createElement('div'); tr.id='edSecTray'; document.body.appendChild(tr); }
+  document.addEventListener('click', function(e){
+    if(!document.body.classList.contains('ed-on')) return;
+    var mv=e.target.closest('[data-secmove]'); if(mv){ var hd=mv.closest('.tudo-section-head'); var k=hd&&hd.getAttribute('data-seckey'); if(k) moveSec(k, parseInt(mv.getAttribute('data-secmove'),10)); return; }
+    var hi=e.target.closest('[data-sechide]'); if(hi){ var hd2=hi.closest('.tudo-section-head'); var k2=hd2&&hd2.getAttribute('data-seckey'); if(k2) ocultarSec(k2); return; }
+    var sw=e.target.closest('[data-secshow]'); if(sw){ mostrarSec(sw.getAttribute('data-secshow')); return; }
+  });
+}
 /* ═══════ LiveLayout · perfis de layout por usuário e dispositivo ═══════
    - Cada usuário tem 2 perfis (pc / mobile) salvos numa linha própria do
      Supabase: key = 'layout:'+userId. Prefixo de cache 'ld-' => fora do
@@ -3598,6 +3650,10 @@ var LiveLayout = (function(){
     KEYS.forEach(function(k){ if(clean.indexOf(k)<0) clean.push(k); });
     p.order=clean; p._m=Date.now(); writeCache(); pushCloud();
   }
+  function setHidden(d, arr){
+    var p=profile(d); p.hidden=(arr||[]).filter(function(k){ return KEYS.indexOf(k)>=0; });
+    p._m=Date.now(); writeCache(); pushCloud();
+  }
   function syncFromCloud(){
     init();
     if(!canCloud()) return;
@@ -3625,6 +3681,7 @@ var LiveLayout = (function(){
     order: function(d){ return profile(d).order.slice(); },
     hidden: function(d){ return profile(d).hidden.slice(); },
     setOrder: setOrder,
+    setHidden: setHidden,
     syncFromCloud: syncFromCloud
   };
 })();
@@ -3736,8 +3793,8 @@ function edGroupSection(k){
     g.els.forEach(function(e){ w.appendChild(e); });
     var hasChart=!!w.querySelector('.chart-wrap');
     var tools=document.createElement('div'); tools.className='ed-tools';
-    tools.innerHTML='<button data-edw="4" title="um terco da largura">&#8531;</button><button data-edw="6" title="metade da largura">&#189;</button><button data-edw="8" title="dois tercos">&#8532;</button><button data-edw="12" title="largura inteira">1/1</button>'
-      +(hasChart?'<span class="sep"></span><button data-edh="s" title="grafico baixo">S</button><button data-edh="m" title="grafico medio">M</button><button data-edh="l" title="grafico alto">L</button>':'')
+    tools.innerHTML='<span class="ed-lab">Larg</span><button data-edw="4" title="um terço da largura">&#8531;</button><button data-edw="6" title="metade da largura">&#189;</button><button data-edw="8" title="dois terços">&#8532;</button><button data-edw="12" title="largura inteira">1/1</button>'
+      +(hasChart?'<span class="sep"></span><span class="ed-lab">Alt</span><button data-edh="s" title="gráfico baixo">S</button><button data-edh="m" title="gráfico médio">M</button><button data-edh="l" title="gráfico alto">L</button>':'')
       +'<span class="sep"></span><button class="ed-x" data-edx title="ocultar este bloco">&#10005;</button>';
     w.appendChild(tools);
   });
@@ -3832,8 +3889,10 @@ function edApplyOrder(k){ edApplySection(k); }
 function applyAll(){
   try{
     edGroupBlocks();
+    edMountSectionBars();
     SEC_KEYS.forEach(edApplySection);
     edUpdateTray();
+    edUpdateSecTray();
     clearTimeout(applyAll._rz); applyAll._rz=setTimeout(function(){ try{ window.dispatchEvent(new Event('resize')); }catch(e){} }, 80);
   }catch(e){}
 }
@@ -3912,7 +3971,7 @@ function initLayoutExtras(){
   try{ if(window.LiveLayout) LiveLayout.init(); }catch(e){}
   try{ if(window.LiveAppearance){ LiveAppearance.init(); LiveAppearance.apply(); } }catch(e){}
   try{ applySecOrder(); initSecControls(); }catch(e){}
-  try{ LiveBlocks.init(); applyAll(); edInitDrag(); edInitTools(); }catch(e){}
+  try{ LiveBlocks.init(); applyAll(); edInitDrag(); edInitTools(); edInitSecTools(); }catch(e){}
 }
 
 // ── cadastro de pessoas & regras ──
