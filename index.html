@@ -463,6 +463,13 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .ov-track{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden}
 .ov-fill{height:100%;border-radius:99px;background:var(--grad,linear-gradient(90deg,var(--accent),#ec4899));transition:width .6s cubic-bezier(.2,.7,.1,1)}
 .ov-pfoot{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-4);margin-top:5px}
+.ov-share-wrap{display:flex;align-items:center;gap:24px}
+.ov-donut{position:relative;width:180px;height:180px;flex-shrink:0}
+.ov-donut-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.ov-donut-c .v{font-size:16px;font-weight:800;letter-spacing:-.02em}
+.ov-donut-c .l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-top:1px}
+.ov-share-list{flex:1;min-width:0}
+@media(max-width:639px){.ov-share-wrap{flex-direction:column;gap:14px}.ov-donut{width:150px;height:150px}}
 .ov-srow{display:grid;grid-template-columns:minmax(90px,150px) 1fr 52px;align-items:center;gap:14px;padding:8px 0}
 .ov-sname{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
 .ov-spct{font-size:12.5px;font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--text-2)}
@@ -525,8 +532,8 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .funil-conv{min-width:52px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--pos)}
 
 /* ════ HEATMAP ════ */
-.heatmap{display:grid;grid-template-columns:42px repeat(7,1fr);gap:3px}
-.hm-cell{aspect-ratio:1.5/1;background:var(--surface-2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;transition:transform .15s;min-height:34px;font-family:'JetBrains Mono',monospace}
+.heatmap{display:grid;grid-template-columns:42px repeat(7,1fr);gap:4px}
+.hm-cell{height:34px;background:var(--surface-2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;transition:transform .15s;min-height:34px;font-family:'JetBrains Mono',monospace}
 .hm-cell:hover{transform:scale(1.08);z-index:2;position:relative}
 .hm-cell.empty{background:var(--bg-2);color:var(--text-4)}
 .hm-label{display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:var(--text-3);font-size:10px;font-family:'JetBrains Mono',monospace}
@@ -625,6 +632,16 @@ body.tudo-mode .tudo-nav{display:flex;flex-wrap:wrap;gap:7px;position:sticky;top
 .dl-chips b{color:var(--pos)}
 .dl-foot{display:flex;justify-content:space-between;gap:10px;margin-top:4px;font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-4)}
 .dl-foot span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-main{min-width:0}
+.dl-top .dl-chips{flex:1;min-width:0;text-align:right}
+/* No celular: empilha e QUEBRA os chips pra mostrar tudo (nada de cortar) */
+@media(max-width:639px){
+  .dl-row{grid-template-columns:46px 1fr;gap:9px;padding:10px 2px}
+  .dl-top{flex-direction:column;align-items:flex-start;gap:2px}
+  .dl-top .dl-chips{white-space:normal;text-align:left;line-height:1.55;font-size:10px}
+  .dl-foot{flex-direction:column;gap:1px}
+  .dl-foot span:first-child{white-space:normal}
+}
 /* Tipografia — legendas padronizadas em caixa alta */
 .kpi-hint{font-family:'Inter',sans-serif!important;text-transform:uppercase;font-size:9.5px!important;letter-spacing:.09em;font-weight:600;color:var(--text-4)!important}
 .card-sub{text-transform:uppercase;font-size:10px;letter-spacing:.08em;font-weight:600;color:var(--text-4)}
@@ -741,7 +758,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);text-
   .kpi-grid{grid-template-columns:repeat(4,1fr)}
   .row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .row-2 .card{margin-top:0}
-  .hm-cell{min-height:42px;font-size:12px}
+  .hm-cell{height:30px;font-size:11px}
   .hero{padding:28px}
   .insights{grid-template-columns:repeat(2,1fr)}
 }
@@ -753,7 +770,7 @@ footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);text-
   .fab{justify-content:center}
   .toast{bottom:120px;right:14px;left:14px;max-width:none}
   .heatmap{grid-template-columns:32px repeat(7,1fr)}
-  .hm-cell{font-size:10px;min-height:30px}
+  .hm-cell{font-size:9px;height:26px}
   .hero-meta{gap:14px}
 }
 </style>
@@ -1012,7 +1029,7 @@ body{ font-family:'Manrope',system-ui,-apple-system,sans-serif !important; }
 
     <div class="card" style="margin-bottom:14px"><div class="card-pad">
       <div class="card-head"><div><div class="card-title">Participação por loja</div><div class="card-sub" id="ovShareSub">share do GMV no período</div></div></div>
-      <div id="ovShare"></div>
+      <div class="ov-share-wrap"><div class="ov-donut"><canvas id="ovShareChart"></canvas><div class="ov-donut-c" id="ovDonutCenter"></div></div><div id="ovShare" class="ov-share-list"></div></div>
     </div></div>
 
     <div class="section-label">Métricas-chave</div>
@@ -2441,15 +2458,30 @@ function renderOvExtras(){
         return { name:s.name, color:s.color, logo:s.logo, gmv: rs.reduce((a,r)=>a+r.g,0) };
       }).filter(r=>r.gmv>0).sort((a,b)=>b.gmv-a.gmv);
       const tot = rows.reduce((a,r)=>a+r.gmv,0);
+      // legenda (lista) ao lado do donut
       elS.innerHTML = rows.map(r=>{
         const pct = tot>0 ? r.gmv/tot*100 : 0;
-        const ic = r.logo ? '<span class="store-logo-card" style="background:url('+r.logo+') center/cover"></span>' : '<span class="store-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
+        const dot = '<span class="store-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
         return '<div class="ov-srow" title="'+brl(r.gmv)+'">'
-          + '<div class="ov-sname">'+ic+r.name+'</div>'
-          + '<div class="ov-track"><div class="ov-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
+          + '<div class="ov-sname">'+dot+r.name+'</div>'
+          + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
           + '<div class="ov-spct">'+pct.toFixed(0)+'%</div>'
           + '</div>';
       }).join('') || '<div style="text-align:center;color:var(--text-4);padding:18px 8px;font-size:13px">Sem vendas no período</div>';
+      // donut (pizza)
+      const cvs = document.getElementById('ovShareChart');
+      const center = document.getElementById('ovDonutCenter');
+      if(cvs){
+        destroyChart('ovshare');
+        if(rows.length){
+          CHARTS.ovshare = new Chart(cvs, {
+            type:'doughnut',
+            data:{ labels: rows.map(r=>r.name), datasets:[{ data: rows.map(r=>r.gmv), backgroundColor: rows.map(r=>r.color||'#8b5cf6'), borderColor:'transparent', borderWidth:0, hoverOffset:6 }] },
+            options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=> ' '+c.label+': '+brl(c.parsed)+' ('+(tot>0?(c.parsed/tot*100).toFixed(0):0)+'%)' } } } }
+          });
+          if(center) center.innerHTML = '<div class="v">'+brlk(tot)+'</div><div class="l">'+rows.length+' loja'+(rows.length>1?'s':'')+'</div>';
+        } else if(center){ center.innerHTML=''; }
+      }
     }catch(e){ elS.innerHTML=''; }
   }
 }
