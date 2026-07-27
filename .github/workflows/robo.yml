@@ -2,14 +2,18 @@ name: Robô LiveDash
 
 on:
   schedule:
-    - cron: '15 21 * * *'    # 18:15 no Brasil (minuto quebrado = menos fila no GitHub)
-    - cron: '15 2 * * *'     # 23:15 no Brasil
-  workflow_dispatch:          # botão "Run workflow" — roda na hora, sempre instantâneo
+    - cron: '25 * * * *'      # de hora em hora, no minuto :25 (repo público = grátis ilimitado)
+  workflow_dispatch:           # botão "Run workflow" — roda na hora
+
+# evita rodadas empilhadas se uma demorar
+concurrency:
+  group: robo-livedash
+  cancel-in-progress: false
 
 jobs:
   coletar:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: robo
@@ -18,6 +22,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Cache do navegador Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
       - run: npm install
       - run: npx playwright install --with-deps chromium
       - name: Rodar o robô
