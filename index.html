@@ -470,11 +470,16 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .ov-donut-c .l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-top:1px}
 .ov-share-list{flex:1;min-width:0}
 /* lista do share: logo da loja + barra com teto de largura (não estica a tela toda) */
-#ovShare .ov-srow{grid-template-columns:minmax(130px,1fr) minmax(0,200px) 46px;gap:12px;padding:6px 0}
+#ovShare .ov-srow{grid-template-columns:minmax(130px,1fr) minmax(0,200px) 76px;gap:12px;padding:6px 0}
 #ovShare .ovs-logo{width:22px;height:22px;border-radius:6px;flex-shrink:0;background-size:cover;background-position:center;border:1px solid var(--border)}
 #ovShare .ovs-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-#ovShare .ovs-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(max-width:639px){.ov-share-wrap{flex-direction:column;gap:14px}.ov-donut{width:150px;height:150px}#ovShare .ov-srow{grid-template-columns:minmax(100px,1fr) minmax(0,120px) 40px;gap:10px}#ovShare .ovs-logo{width:20px;height:20px}}
+#ovShare .ovs-nm{min-width:0;display:flex;flex-direction:column;line-height:1.25}
+#ovShare .ovs-n1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;color:var(--text)}
+#ovShare .ovs-lv{font-style:normal;font-size:9.5px;color:var(--text-4);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+#ovShare .ov-spct{display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
+#ovShare .ov-spct b{font-size:12.5px;color:var(--text);font-weight:700}
+#ovShare .ov-spct em{font-style:normal;font-size:10px;color:var(--text-4)}
+@media(max-width:639px){.ov-share-wrap{flex-direction:column;gap:14px}.ov-donut{width:150px;height:150px}#ovShare .ov-srow{grid-template-columns:minmax(100px,1fr) minmax(0,110px) 64px;gap:10px}#ovShare .ovs-logo{width:20px;height:20px}}
 .ov-srow{display:grid;grid-template-columns:minmax(90px,150px) 1fr 52px;align-items:center;gap:14px;padding:8px 0}
 .ov-sname{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
 .ov-spct{font-size:12.5px;font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--text-2)}
@@ -1218,10 +1223,6 @@ body{ font-family:'Manrope',system-ui,-apple-system,sans-serif !important; }
       <div class="chart-wrap tall"><canvas id="mesChart" style="box-sizing: border-box; display: block; height: 320px; width: 1098px;" width="1098" height="320"></canvas></div>
       <div id="mesResumo" class="dl dl-mini"></div>
     </div></div>
-    <div class="card" style="margin-top:14px"><div class="card-pad">
-      <div class="card-head"><div><div class="card-title">Seguidores ganhos por dia</div><div class="card-sub">novos seguidores somados por dia</div></div></div>
-      <div class="chart-wrap"><canvas id="followChart" style="box-sizing: border-box; display: block; height: 240px; width: 1098px;" width="1098" height="240"></canvas><div id="followEmpty" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;color:var(--text-4);font-size:13px;line-height:1.6">Sem dados de seguidores no período.<br>O robô do TikTok ainda não traz esse número — aparece nas lojas com planilha importada.</div></div>
-    </div></div>
     <div class="kpi-grid" style="margin-top:14px">
       <div class="kpi"><div class="kpi-lab">Duração média</div><div class="kpi-val" id="efDurMed">—</div></div>
       <div class="kpi"><div class="kpi-lab">GMV/hora</div><div class="kpi-val" id="efGmvH">—</div></div>
@@ -1562,7 +1563,14 @@ const AppState = {
   // Grava memória -> cache local (o hook de sync sobe pra nuvem sozinho).
   save(){
     try{
-      localStorage.setItem('la-stores', JSON.stringify(STORES));
+      // Proteção: nunca sobrescrever um cache COM lojas por um STORES vazio.
+      // (boot parcial/estado transitório gravando [] apagava os dados; o reset()
+      // continua limpando de verdade porque REMOVE as chaves em vez de gravar [].)
+      var _atual=null; try{ _atual=JSON.parse(localStorage.getItem('la-stores')||'null'); }catch(e){}
+      var _vazio = !Array.isArray(STORES) || STORES.length===0;
+      if(!(_vazio && Array.isArray(_atual) && _atual.length>0)){
+        localStorage.setItem('la-stores', JSON.stringify(STORES));
+      }
       localStorage.setItem('la-stores-stamp', SNAPSHOT_STAMP);
       if(typeof PREMIO !== 'undefined') localStorage.setItem('la-premio', JSON.stringify(PREMIO));
     }catch(e){}
@@ -2349,7 +2357,6 @@ function render(){
   renderDowChart(data);
   renderProdutos(data);
   renderEvolucao(allRegs); // evolução mensal usa o histórico inteiro (não encolhe com filtro curto)
-  renderFollowChart(data);
   renderTop20(data);
   renderHistorico(data);
   renderPorDia(data);
@@ -2522,32 +2529,36 @@ function renderOvExtras(){
       const sub = document.getElementById('ovPremioSub');
       if(sub){
         const fl = (typeof window!=='undefined' && window.CURRENT_FILTER_LABEL) ? window.CURRENT_FILTER_LABEL : 'Tudo';
-        sub.textContent = 'vendas por pessoa · ' + fl;
+        sub.textContent = 'vendas: ' + fl + ' · comissão: mês atual';
       }
       const stats = peopleStatsForFilter();
-      const people = stats.filter(p=>p.id!=='__sem__');
+      const mrNow = getMonthRange(0);
+      const statsMes = peopleStatsForMonth(mrNow);
+      const mesById = {}; statsMes.forEach(function(pp){ mesById[pp.id]=pp; });
+      const people = stats.filter(p=>p.id!=='__sem__' && p.lives>0);
       let html = people.map(p=>{
-        const inf = calcPremio(p.gmv);
+        const gmvMes = (mesById[p.id]||{gmv:0}).gmv; // comissão e faixa são SEMPRE do mês corrente
+        const inf = calcPremio(gmvMes);
         const nextMin = inf.next ? inf.next.alvo : null;
-        const alvo = nextMin || Math.max(p.gmv, inf.aplicada ? inf.aplicada.min : 0) || 1;
-        const pct = Math.min(100, alvo>0 ? (p.gmv/alvo*100) : 0);
+        const alvo = nextMin || Math.max(gmvMes, inf.aplicada ? inf.aplicada.min : 0) || 1;
+        const pct = Math.min(100, alvo>0 ? (gmvMes/alvo*100) : 0);
         const ini = (p.nome||'?').trim().charAt(0);
         return '<div class="ov-prow">'
           + '<div class="ov-phead">'
           +   '<div class="ov-pavatar" style="background:'+(p.cor?('linear-gradient(135deg,'+p.cor+',var(--accent))'):'var(--grad)')+'">'+ini+'</div>'
           +   '<div><div class="ov-pname">'+p.nome+'</div><div class="ov-psub">'+p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar</div></div>'
-          +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div><div class="p">'+(inf.premio>0?('comissão <strong>'+brl(inf.premio)+'</strong>'):'sem faixa ainda')+'</div></div>'
+          +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div><div class="p">'+(inf.premio>0?('comissão do mês <strong>'+brl(inf.premio)+'</strong>'):'sem faixa no mês')+'</div></div>'
           + '</div>'
           + '<div class="ov-track"><div class="ov-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
-          + '<div class="ov-pfoot"><span>'+(inf.aplicada?('faixa '+inf.faixaLabel):'abaixo da 1ª faixa')+'</span><span>'+(inf.next?('próxima: '+brlk(inf.next.alvo)):'faixa máxima')+'</span></div>'
+          + '<div class="ov-pfoot"><span>'+(inf.aplicada?('faixa '+inf.faixaLabel):'abaixo da 1ª faixa')+' · '+NOMES_MES[mrNow.month]+'</span><span>'+(inf.next?('próxima: '+brlk(inf.next.alvo)):'faixa máxima')+'</span></div>'
           + '</div>';
       }).join('');
       // Gravadas: live sem sigla depois da virada (não é de ninguém, não tem comissão)
       const grav = stats.find(p=>p.id==='__sem__');
       if(grav && grav.lives>0){
-        html += '<div class="ov-prow off" style="cursor:pointer" onclick="openTagModal()" title="Toque para atribuir manualmente">'
+        html += '<div class="ov-prow" style="cursor:pointer" onclick="openTagModal()" title="Toque para atribuir manualmente">'
           + '<div class="ov-phead">'
-          + '<div class="ov-pavatar" style="background:var(--surface-3)">' + IC('video') + '</div>'
+          + '<div class="ov-pavatar" style="background:var(--grad,linear-gradient(135deg,var(--accent),#ec4899))">' + IC('video') + '</div>'
           + '<div><div class="ov-pname">Gravadas</div><div class="ov-psub">'+grav.lives+' live'+(grav.lives===1?'':'s')+' · '+fmtMinH(grav.min)+' no ar · sem sigla</div></div>'
           + '<div class="ov-pval"><div class="g">'+brl(grav.gmv)+'</div><div class="p">sem comissão</div></div>'
           + '</div></div>';
@@ -2571,7 +2582,7 @@ function renderOvExtras(){
     try{
       const rows = STORES.map(s=>{
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
-        return { name:s.name, color:s.color, logo:s.logo, gmv: rs.reduce((a,r)=>a+r.g,0) };
+        return { name:s.name, color:s.color, logo:s.logo, gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length };
       }).filter(r=>r.gmv>0).sort((a,b)=>b.gmv-a.gmv);
       const tot = rows.reduce((a,r)=>a+r.gmv,0);
       // legenda (lista) ao lado do donut
@@ -2579,9 +2590,9 @@ function renderOvExtras(){
         const pct = tot>0 ? r.gmv/tot*100 : 0;
         const ic = r.logo ? '<span class="ovs-logo" style="background-image:url('+r.logo+')"></span>' : '<span class="ovs-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
         return '<div class="ov-srow" title="'+brl(r.gmv)+'">'
-          + '<div class="ov-sname">'+ic+'<span class="ovs-nm">'+r.name+'</span></div>'
+          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+'</em></span></div>'
           + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
-          + '<div class="ov-spct">'+pct.toFixed(0)+'%</div>'
+          + '<div class="ov-spct"><b>'+brlk(r.gmv)+'</b><em>'+pct.toFixed(0)+'%</em></div>'
           + '</div>';
       }).join('') || '<div style="text-align:center;color:var(--text-4);padding:18px 8px;font-size:13px">Sem vendas no período</div>';
       // donut (pizza)
@@ -3016,53 +3027,6 @@ function renderEvolucao(data){
   }
 }
 
-function renderFollowChart(data){
-  // Seguidores ganhos por dia
-  const byDia = {};
-  data.forEach(r=>{
-    byDia[r.d] = (byDia[r.d]||0) + r.nf;
-  });
-  const dias = Object.keys(byDia).sort();
-  const labels = dias.map(d=>{ const [,m,dd]=d.split('-'); return `${dd}/${m}`; });
-  const values = dias.map(d=>byDia[d]);
-  // sem nenhum seguidor no período: mostra o aviso no lugar do gráfico zerado
-  try{
-    const _fc=document.getElementById('followChart'), _fe=document.getElementById('followEmpty');
-    const _tem=values.some(v=>v>0);
-    if(_fc) _fc.style.visibility=_tem?'visible':'hidden';
-    if(_fe) _fe.style.display=_tem?'none':'flex';
-    if(!_tem){ destroyChart('follow'); return; }
-  }catch(e){}
-  // Cumulativo
-  let acc = 0;
-  const cum = values.map(v=>{ acc+=v; return acc; });
-
-  const accent = getCSSVar('--accent');
-  const pos = getCSSVar('--pos');
-  destroyChart('follow');
-  CHARTS.follow = new Chart(document.getElementById('followChart'),{
-    data:{
-      labels,
-      datasets:[
-        {type:'bar', label:'Por dia', data:values, backgroundColor:accent, borderRadius:3, yAxisID:'y1'},
-        {type:'line', label:'Acumulado', data:cum, borderColor:pos, backgroundColor:'rgba(62,207,142,.08)', borderWidth:2, pointRadius:2, tension:0.3, yAxisID:'y2', fill:true}
-      ]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{labels:{font:{size:11},color:chartTextColor(),padding:12,usePointStyle:true}},
-        tooltip:{...TOOLTIP_CFG(), callbacks:{label:c=>` ${c.dataset.label}: ${numFmt(c.raw)} seguidores`}}
-      },
-      scales:{
-        x:{grid:{display:false}, ticks:{color:chartTextColor(), font:{size:10}, maxRotation:45, autoSkip:true, maxTicksLimit:14}},
-        y1:{position:'left', grid:{color:chartGridColor()}, border:{display:false}, ticks:{color:chartTextColor(), font:{size:10}}},
-        y2:{position:'right', grid:{display:false}, border:{display:false}, ticks:{color:pos, font:{size:10}}}
-      }
-    }
-  });
-}
 
 
 function renderTop20(data){
@@ -3532,30 +3496,42 @@ function personById(id){ ensureResp(); return (PREMIO.responsaveis||[]).find(p=>
 function isDona(id){ const p=personById(id); return !!(p&&p.dona); }
 function respAliasMap(){ ensureResp(); const m={}; (PREMIO.responsaveis||[]).forEach(p=>{ (p.aliases||[]).forEach(a=>{ const k=String(a||'').toUpperCase().replace(/[^A-Z0-9]/g,''); if(k) m[k]=p.id; }); }); return m; }
 function prefixTok(t){ const tok=(String(t||'').trim().split(/[\s\-_:.|]+/)[0])||''; return tok.toUpperCase().replace(/[^A-Z0-9]/g,''); }
-function resolveResp(reg, storeId){
+// Atribuição com DUPLA: se o nome da live tem 2+ siglas de pessoas diferentes
+// (ex.: "Sofá AL TC"), a live é das duas — o GMV divide igual (50/50),
+// a live e a duração contam para cada uma. Override manual continua single.
+function resolveRespMulti(reg, storeId){
   ensureResp();
-  if(PREMIO.overrides && PREMIO.overrides[reg.id]!=null) return PREMIO.overrides[reg.id];
+  if(PREMIO.overrides && PREMIO.overrides[reg.id]!=null) return [PREMIO.overrides[reg.id]];
   const am=respAliasMap();
   // Varre TODAS as palavras do nome (não só a 1ª). Código casa como PALAVRA INTEIRA:
   // "AL" casa com "AL", mas não com "ALS"/"ALMOFADA"/"kiTS".
   const words=String(reg.tr || reg.t || '').match(/[A-Za-z0-9À-ÿ]+/g) || [];
+  const ids=[];
   for(let i=0;i<words.length;i++){
     const k=words[i].toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if(k && am[k]) return isDona(am[k]) ? '__sem__' : am[k];
+    if(k && am[k] && ids.indexOf(am[k])<0) ids.push(am[k]);
+  }
+  if(ids.length){
+    const vivos=ids.filter(id=>!isDona(id));
+    return vivos.length ? vivos : ['__sem__'];
   }
   if((reg.d||'') <= (PREMIO.viraISO||'')){
     const st=STORES.find(s=>s.id===storeId);
-    if(st){ const p=(PREMIO.responsaveis||[]).find(pp=>pp.lojaFallback && pp.lojaFallback.toUpperCase()===String(st.name||'').toUpperCase()); if(p) return p.dona ? '__sem__' : p.id; }
+    if(st){ const p=(PREMIO.responsaveis||[]).find(pp=>pp.lojaFallback && pp.lojaFallback.toUpperCase()===String(st.name||'').toUpperCase()); if(p) return [p.dona ? '__sem__' : p.id]; }
   }
-  return '__sem__';
+  return ['__sem__'];
 }
-function personMonthRegs(personId, mr){ const out=[]; STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ if(resolveResp(r,s.id)===personId) out.push(r); }); }); return out; }
+function resolveResp(reg, storeId){ return resolveRespMulti(reg, storeId)[0]; }
+// fração da live que pertence à pessoa (0, 0.5 numa dupla, 1 sozinha)
+function personShare(reg, storeId, personId){ const ids=resolveRespMulti(reg, storeId); const i=ids.indexOf(personId); return i<0 ? 0 : 1/ids.length; }
+function personMonthGmv(personId, mr){ let g=0; STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const sh=personShare(r,s.id,personId); if(sh>0) g+=(r.g||0)*sh; }); }); return g; }
+function personMonthRegs(personId, mr){ const out=[]; STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ if(resolveRespMulti(r,s.id).indexOf(personId)>=0) out.push(r); }); }); return out; }
 function allAttribRegs(mr){ const out=[]; STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pid=resolveResp(r,s.id); if(pid!=='__sem__' && !isDona(pid)) out.push(r); }); }); return out; }
 function peopleStatsForMonth(mr){
   ensureResp();
   const map={}; (PREMIO.responsaveis||[]).forEach(p=>{ if(p.dona) return; map[p.id]={id:p.id,nome:p.nome,cor:p.cor,gmv:0,lives:0,min:0}; });
   map['__sem__']={id:'__sem__',nome:'Gravadas',cor:'#9aa0aa',gmv:0,lives:0,min:0};
-  STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pid=resolveResp(r,s.id); if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=r.g; map[pid].lives++; map[pid].min+=(r.du||0); }); });
+  STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid].min+=(r.du||0); }); }); });
   const arr=Object.values(map).filter(x=>x.id!=='__sem__').sort((a,b)=>b.gmv-a.gmv);
   if(map['__sem__'].lives>0) arr.push(map['__sem__']);
   return arr;
@@ -3566,7 +3542,7 @@ function peopleStatsForFilter(){
   ensureResp();
   const map={}; (PREMIO.responsaveis||[]).forEach(p=>{ if(p.dona) return; map[p.id]={id:p.id,nome:p.nome,cor:p.cor,gmv:0,lives:0,min:0}; });
   map['__sem__']={id:'__sem__',nome:'Gravadas',cor:'#9aa0aa',gmv:0,lives:0,min:0};
-  STORES.forEach(s=>{ filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{ const pid=resolveResp(r,s.id); if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=r.g; map[pid].lives++; map[pid].min+=(r.du||0); }); });
+  STORES.forEach(s=>{ filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid].min+=(r.du||0); }); }); });
   const arr=Object.values(map).filter(x=>x.id!=='__sem__').sort((a,b)=>b.gmv-a.gmv);
   if(map['__sem__'].lives>0) arr.push(map['__sem__']);
   return arr;
@@ -3594,12 +3570,25 @@ function peopleOpts(cur){ ensureResp(); return (PREMIO.responsaveis||[]).map(p=>
 function setOverride(regId, val){ ensureResp(); if(!PREMIO.overrides) PREMIO.overrides={}; if(val==='__auto__'){ delete PREMIO.overrides[regId]; } else { PREMIO.overrides[regId]=val; } savePremioOnly(); }
 
 let TAG_FILTER={resp:'todos',store:'',q:''};
+let TAG_MES=null;
 function openTagModal(){
   ensureResp(); ensureRegIds();
+  TAG_MES=MES_OFFSET; // abre no mês exibido na aba; o select deixa trocar
+  const _now0=getMonthRange(0);
+  const _mesesSet={};
+  STORES.forEach(s=>(s.regs||[]).forEach(r=>{ if(r.d) _mesesSet[r.d.slice(0,7)]=1; }));
+  const _offs=Object.keys(_mesesSet).sort().reverse().slice(0,14).map(k=>{
+    const y=+k.slice(0,4), m=+k.slice(5,7)-1;
+    return {off:(y-_now0.year)*12+(m-_now0.month), y:y, m:m};
+  });
+  // mês da aba sem nenhuma live: cai no mês mais recente que tem
+  if(_offs.length && !_offs.some(o=>o.off===TAG_MES)) TAG_MES=_offs[0].off;
+  const mesOpts=_offs.map(o=>'<option value="'+o.off+'"'+(o.off===TAG_MES?' selected':'')+'>'+NOMES_MES_FULL[o.m]+' de '+o.y+'</option>').join('');
   const respOpts='<option value="todos">Todos os responsáveis</option><option value="__sem__">Sem responsável</option>'+(PREMIO.responsaveis||[]).map(p=>'<option value="'+p.id+'">'+p.nome+(p.dona?' (fora)':'')+'</option>').join('');
   const storeOpts='<option value="">Todas as lojas</option>'+STORES.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
   document.getElementById('tagModalBody').innerHTML=
     '<div class="tag-bulk">'+
+      '<select id="tagFMes" onchange="TAG_MES=parseInt(this.value,10);renderTagList()">'+mesOpts+'</select>'+
       '<select id="tagFResp" onchange="renderTagList()">'+respOpts+'</select>'+
       '<select id="tagFStore" onchange="renderTagList()">'+storeOpts+'</select>'+
       '<input id="tagFQ" type="text" placeholder="buscar no nome da live…" oninput="renderTagList()" style="flex:1;min-width:130px;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">'+
@@ -3614,7 +3603,7 @@ function openTagModal(){
   document.getElementById('tagModal').style.display='flex';
 }
 function tagListItems(){
-  const mr=getMonthRange(MES_OFFSET);
+  const mr=getMonthRange(typeof TAG_MES==='number'?TAG_MES:MES_OFFSET);
   const rv=(document.getElementById('tagFResp')||{}).value||'todos';
   const sov=(document.getElementById('tagFStore')||{}).value||'';
   const qv=((document.getElementById('tagFQ')||{}).value||'');
@@ -4194,7 +4183,7 @@ function openRespCfg(){
   ensureResp();
   const list=(PREMIO.responsaveis||[]).map(rcfgRowHtml).join('');
   document.getElementById('respCfgBody').innerHTML=
-    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio.</div>'+
+    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas.</div>'+
     '<div id="rcfgList">'+list+'</div>'+
     '<button class="comm-cfg-btn" onclick="addRespRow()" style="margin:6px 0 14px">+ adicionar pessoa</button>'+
     '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px"><label style="font-size:12px;color:var(--text-3)">Data de virada (loja → prefixo):</label><input type="date" id="rcfgVira" value="'+(PREMIO.viraISO||'')+'" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" onchange="autoSaveResp()"><span id="rcfgSaved" style="font-size:11.5px;color:var(--pos);opacity:.55;transition:opacity .3s">salva sozinho</span><button class="comm-cfg-btn" onclick="saveRespCfg()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)">fechar</button></div>';
@@ -4281,7 +4270,7 @@ function renderCommCards(mr){
     const p = personById(PREMIO_PERSON_ID);
     if(lbl) lbl.textContent = p ? ('Lojas de ' + p.nome + ' no mês') : 'Detalhe';
     const rows=[]; let tot=0;
-    STORES.forEach(s=>{ const rs=filterRegsByMonth(s.regs,mr).filter(r=>resolveResp(r,s.id)===PREMIO_PERSON_ID); if(rs.length){ const g=rs.reduce((a,r)=>a+r.g,0); tot+=g; rows.push({name:s.name,color:s.color,logo:s.logo,gmv:g,lives:rs.length}); } });
+    STORES.forEach(s=>{ const rs=filterRegsByMonth(s.regs,mr).filter(r=>personShare(r,s.id,PREMIO_PERSON_ID)>0); if(rs.length){ const g=rs.reduce((a,r)=>a+r.g*personShare(r,s.id,PREMIO_PERSON_ID),0); tot+=g; rows.push({name:s.name,color:s.color,logo:s.logo,gmv:g,lives:rs.length}); } });
     rows.sort((a,b)=>b.gmv-a.gmv);
     el.innerHTML = '<div class="cm-detail card"><div class="card-pad">'
       + '<button class="cm-back" onclick="selPremioPerson(&#39;__all__&#39;)">‹ todas as pessoas</button>'
@@ -4301,12 +4290,12 @@ function renderCommCards(mr){
   if(PREMIO_MODE === 'pessoa'){
     if(lbl) lbl.textContent = 'Por pessoa';
     const stats = peopleStatsForMonth(mr);
-    stats.filter(p=>p.id!=='__sem__').forEach(p=>{
+    stats.filter(p=>p.id!=='__sem__' && p.lives>0).forEach(p=>{
       cards += mkCard({ nome:p.nome, cor:p.cor, gmv:p.gmv, sub:p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar', sel:false, click:"selPremioPerson('"+p.id+"')" });
     });
     const sem = stats.find(p=>p.id==='__sem__');
     if(sem && sem.lives>0){
-      cards += mkCard({ nome:'Gravadas', cor:'#9aa0aa', gmv:sem.gmv, sub:sem.lives+' lives sem sigla · toque para atribuir', off:false, click:'openTagModal()' });
+      cards += mkCard({ nome:'Gravadas', gmv:sem.gmv, sub:sem.lives+' lives sem sigla · toque para atribuir', off:false, icone:IC('video'), click:'openTagModal()' });
     }
     let donaG=0, donaL=0;
     STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pid=resolveResp(r,s.id); if(isDona(pid)){ donaG+=r.g; donaL++; } }); });
@@ -4343,10 +4332,10 @@ function renderComissao(){
   renderPremioChips();
 
   // escopo selecionado
-  let storeKey, scopeName, scopeRegs;
+  let storeKey, scopeName, scopeRegs, scopeFatPessoa=null;
   if(PREMIO_MODE === 'pessoa'){
     if(PREMIO_PERSON_ID === '__all__'){ storeKey='p:__all__'; scopeName='Todas as pessoas (somado)'; scopeRegs = allAttribRegs(mr); }
-    else { const _p = personById(PREMIO_PERSON_ID); if(!_p){ PREMIO_PERSON_ID='__all__'; return renderComissao(); } storeKey='p:'+_p.id; scopeName=_p.nome; scopeRegs = personMonthRegs(_p.id, mr); }
+    else { const _p = personById(PREMIO_PERSON_ID); if(!_p){ PREMIO_PERSON_ID='__all__'; return renderComissao(); } storeKey='p:'+_p.id; scopeName=_p.nome; scopeRegs = personMonthRegs(_p.id, mr); scopeFatPessoa = personMonthGmv(_p.id, mr); }
   } else if(PREMIO_STORE_ID === '__all__'){
     storeKey = '__all__'; scopeName = 'Todas as lojas (somado)';
     scopeRegs = STORES.flatMap(s => filterRegsByMonth(s.regs, mr));
@@ -4356,7 +4345,7 @@ function renderComissao(){
     storeKey = st.id; scopeName = st.name;
     scopeRegs = filterRegsByMonth(st.regs, mr);
   }
-  const fat = scopeRegs.reduce((s,r) => s + r.g, 0);
+  const fat = (scopeFatPessoa!=null) ? scopeFatPessoa : scopeRegs.reduce((s,r) => s + r.g, 0);
   const lives = scopeRegs.length;
   const itens = scopeRegs.reduce((s,r) => s + (r.it||0), 0);
   const info = calcPremio(fat);
@@ -4423,7 +4412,7 @@ function renderComissao(){
     if(PREMIO_MODE === 'pessoa') hRegs = (PREMIO_PERSON_ID==='__all__') ? allAttribRegs(hmr) : personMonthRegs(PREMIO_PERSON_ID, hmr);
     else if(PREMIO_STORE_ID === '__all__') hRegs = STORES.flatMap(s => filterRegsByMonth(s.regs, hmr));
     else { const st = STORES.find(s => s.id === PREMIO_STORE_ID); hRegs = st ? filterRegsByMonth(st.regs, hmr) : []; }
-    const hFat = hRegs.reduce((a,r)=>a+r.g,0);
+    const hFat = (PREMIO_MODE==='pessoa' && PREMIO_PERSON_ID!=='__all__') ? personMonthGmv(PREMIO_PERSON_ID, hmr) : hRegs.reduce((a,r)=>a+r.g,0);
     let hPremio;
     if(PREMIO_MODE === 'pessoa' && PREMIO_PERSON_ID === '__all__'){ hPremio = peopleStatsForMonth(hmr).filter(p=>p.id!=='__sem__').reduce((s,p)=>s+calcPremio(p.gmv).premio,0); }
     else { hPremio = calcPremio(hFat).premio; }
@@ -4926,6 +4915,8 @@ renderStoreSelector();
 buildPresets();
 renderComissao();
 showTudo();
+// o painel abre sempre no dia de hoje (o Gabriel acompanha o dia corrente)
+try{ setFilter({type:'today'}); }catch(e){}
 </script>
 <script>
 /* ===================== LiveDash · Painel de Conta (drawer) ===================== */
@@ -5411,8 +5402,12 @@ showTudo();
   function wireAddStore(){
     var btn = dr && dr.querySelector('#accAddStore'); if(!btn) return;
     btn.onclick = function(){
-      try{ window.open('http://localhost:9999','_blank'); }catch(e){}
-      try{ toast('Conector','Abrindo o Conector no seu PC. Se não abrir, use o atalho na área de trabalho.','ok',5000); }catch(e){}
+      // pinga o Conector antes de abrir: se estiver desligado, avisa em vez de abrir aba morta
+      fetch('http://localhost:9999/', {mode:'no-cors', cache:'no-store'}).then(function(){
+        try{ window.open('http://localhost:9999','_blank'); }catch(e){}
+      }).catch(function(){
+        try{ toast('Conector desligado','O Conector não está rodando neste PC. Abre o atalho "Conector LiveDash" na área de trabalho e clica aqui de novo.','err',8000); }catch(e){}
+      });
     };
     // quando uma planilha nova é adicionada, atualiza o painel ao reabrir;
     // também escuta o input pra refletir na hora (sem fechar o drawer).
