@@ -1279,13 +1279,14 @@ body{ font-family:'Manrope',system-ui,-apple-system,sans-serif !important; }
         <div class="comm-status aberta" id="commStatus"><span class="dot-live"></span>Mês em andamento</div>
       </div>
       <div class="cm-hero-stats">
-        <div class="cm-stat"><div class="l">Faturamento</div><div class="v" id="commGmv">—</div></div>
+        <div class="cm-stat"><div class="l" title="Só lives com responsável — gravadas e donas não geram comissão">Faturamento atribuído</div><div class="v" id="commGmv">—</div></div>
         <div class="cm-stat"><div class="l">Faixa atual</div><div class="v" id="commBestDay">—</div></div>
         <div class="cm-stat"><div class="l">Lives</div><div class="v" id="commLives">0</div></div>
         <div class="cm-stat"><div class="l">Itens</div><div class="v" id="commItens">0</div></div>
       </div>
       <div class="comm-next" id="commNext"></div>
-      <div class="cm-since">Contando desde <b id="premioDesde">—</b> · salário base <b id="premioSalario">—</b></div>
+      <div class="cm-since" id="commPonte" style="margin-top:12px"></div>
+      <div class="cm-since" style="margin-top:6px">Contando desde <b id="premioDesde">—</b> · salário base <b id="premioSalario">—</b></div>
     </div>
 
     <!-- CARDS POR PESSOA -->
@@ -4399,6 +4400,18 @@ function renderComissao(){
   document.getElementById('commGmv').textContent = brl(fat);
   document.getElementById('commLives').textContent = numFmt(lives);
   document.getElementById('commItens').textContent = numFmt(itens);
+  // ponte com o GMV total do mês: deixa claro por que o faturamento daqui
+  // difere do overview (aqui = todas as lojas, SÓ lives com responsável)
+  { const _pt=document.getElementById('commPonte');
+    if(_pt){
+      let _tot=0,_gr=0,_dn=0;
+      STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ _tot+=r.g; const pids=resolveRespMulti(r,s.id); if(pids[0]==='__sem__'){ _gr+=r.g; return; } if(!pids.some(id=>!isDona(id))) _dn+=r.g; }); });
+      const fora=[];
+      if(_gr>0) fora.push('gravadas <b>'+brl(_gr)+'</b>');
+      if(_dn>0) fora.push('donas <b>'+brl(_dn)+'</b>');
+      _pt.innerHTML = 'GMV total do mês (todas as lojas): <b>'+brl(_tot)+'</b>'+(fora.length?' · fora do prêmio: '+fora.join(' · '):'');
+    }
+  }
   document.getElementById('commBestDay').textContent = heroFaixa;
 
   // próxima faixa
