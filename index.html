@@ -3494,22 +3494,26 @@ function ensureResp(){
 }
 function personById(id){ ensureResp(); return (PREMIO.responsaveis||[]).find(p=>p.id===id)||null; }
 function isDona(id){ const p=personById(id); return !!(p&&p.dona); }
-function respAliasMap(){ ensureResp(); const m={}; (PREMIO.responsaveis||[]).forEach(p=>{ (p.aliases||[]).forEach(a=>{ const k=String(a||'').toUpperCase().replace(/[^A-Z0-9]/g,''); if(k) m[k]=p.id; }); }); return m; }
+function respAliasMap(){ ensureResp(); const m={}; (PREMIO.responsaveis||[]).forEach(p=>{ (p.aliases||[]).forEach(a=>{ const k=String(a||'').toUpperCase().replace(/[^A-Z0-9]/g,''); if(!k) return; if(!m[k]) m[k]=[]; if(m[k].indexOf(p.id)<0) m[k].push(p.id); }); }); return m; }
 function prefixTok(t){ const tok=(String(t||'').trim().split(/[\s\-_:.|]+/)[0])||''; return tok.toUpperCase().replace(/[^A-Z0-9]/g,''); }
 // Atribuição com DUPLA: se o nome da live tem 2+ siglas de pessoas diferentes
 // (ex.: "Sofá AL TC"), a live é das duas — o GMV divide igual (50/50),
 // a live e a duração contam para cada uma. Override manual continua single.
 function resolveRespMulti(reg, storeId){
   ensureResp();
-  if(PREMIO.overrides && PREMIO.overrides[reg.id]!=null) return [PREMIO.overrides[reg.id]];
+  if(PREMIO.overrides && PREMIO.overrides[reg.id]!=null){
+    const ov=String(PREMIO.overrides[reg.id]);
+    return ov.indexOf('+')>0 ? ov.split('+') : [ov]; // marcação manual pode ser dupla ('al+tc')
+  }
   const am=respAliasMap();
   // Varre TODAS as palavras do nome (não só a 1ª). Código casa como PALAVRA INTEIRA:
   // "AL" casa com "AL", mas não com "ALS"/"ALMOFADA"/"kiTS".
+  // Sigla cadastrada em 2+ pessoas (ex.: DUPLA) atribui a todas elas de uma vez.
   const words=String(reg.tr || reg.t || '').match(/[A-Za-z0-9À-ÿ]+/g) || [];
   const ids=[];
   for(let i=0;i<words.length;i++){
     const k=words[i].toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if(k && am[k] && ids.indexOf(am[k])<0) ids.push(am[k]);
+    if(k && am[k]) am[k].forEach(id=>{ if(ids.indexOf(id)<0) ids.push(id); });
   }
   if(ids.length){
     const vivos=ids.filter(id=>!isDona(id));
@@ -3566,7 +3570,22 @@ function migratePersonsOnce(){
   PREMIO._persmig=true; savePremioOnly();
 }
 // ── marcação manual ──
-function peopleOpts(cur){ ensureResp(); return (PREMIO.responsaveis||[]).map(p=>'<option value="'+p.id+'"'+(cur===p.id?' selected':'')+'>'+p.nome+(p.dona?' (fora do prêmio)':'')+'</option>').join(''); }
+function peopleOpts(cur){
+  ensureResp();
+  let out=(PREMIO.responsaveis||[]).map(p=>'<option value="'+p.id+'"'+(cur===p.id?' selected':'')+'>'+p.nome+(p.dona?' (fora do prêmio)':'')+'</option>').join('');
+  // duplas: qualquer par de pessoas ativas, valor 'id1+id2' (ids em ordem estável)
+  const ativos=(PREMIO.responsaveis||[]).filter(p=>!p.dona);
+  if(ativos.length>1){
+    let dup='';
+    for(let i=0;i<ativos.length;i++) for(let j=i+1;j<ativos.length;j++){
+      const par=[ativos[i],ativos[j]].sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+      const val=par[0].id+'+'+par[1].id;
+      dup+='<option value="'+val+'"'+(cur===val?' selected':'')+'>'+par[0].nome+' + '+par[1].nome+' (50/50)</option>';
+    }
+    out+='<optgroup label="Dupla — divide 50/50">'+dup+'</optgroup>';
+  }
+  return out;
+}
 function setOverride(regId, val){ ensureResp(); if(!PREMIO.overrides) PREMIO.overrides={}; if(val==='__auto__'){ delete PREMIO.overrides[regId]; } else { PREMIO.overrides[regId]=val; } savePremioOnly(); }
 
 let TAG_FILTER={resp:'todos',store:'',q:''};
@@ -3609,7 +3628,7 @@ function tagListItems(){
   const qv=((document.getElementById('tagFQ')||{}).value||'');
   TAG_FILTER={resp:rv,store:sov,q:qv};
   const q=qv.trim().toUpperCase(); const items=[];
-  STORES.forEach(s=>{ if(sov && s.id!==sov) return; filterRegsByMonth(s.regs,mr).forEach(r=>{ const cur=resolveResp(r,s.id); if(rv!=='todos' && cur!==rv) return; const nm=(r.tr||r.t||''); if(q && !nm.toUpperCase().includes(q)) return; items.push({r:r,s:s,cur:cur,nm:nm}); }); });
+  STORES.forEach(s=>{ if(sov && s.id!==sov) return; filterRegsByMonth(s.regs,mr).forEach(r=>{ const ids=resolveRespMulti(r,s.id); const ovr=(PREMIO.overrides&&PREMIO.overrides[r.id]!=null)?String(PREMIO.overrides[r.id]):null; const cur=ovr!=null?ovr:ids[0]; if(rv!=='todos' && ids.indexOf(rv)<0) return; const nm=(r.tr||r.t||''); if(q && !nm.toUpperCase().includes(q)) return; items.push({r:r,s:s,cur:cur,nm:nm}); }); });
   return items;
 }
 function renderTagList(){
@@ -4183,7 +4202,7 @@ function openRespCfg(){
   ensureResp();
   const list=(PREMIO.responsaveis||[]).map(rcfgRowHtml).join('');
   document.getElementById('respCfgBody').innerHTML=
-    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas.</div>'+
+    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas. Dica: cadastre a sigla <b>DUPLA</b> nas duas pessoas e toda live com "DUPLA" no nome já divide sozinha; ou marque a dupla na mão em <b>Atribuir lives</b>.</div>'+
     '<div id="rcfgList">'+list+'</div>'+
     '<button class="comm-cfg-btn" onclick="addRespRow()" style="margin:6px 0 14px">+ adicionar pessoa</button>'+
     '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px"><label style="font-size:12px;color:var(--text-3)">Data de virada (loja → prefixo):</label><input type="date" id="rcfgVira" value="'+(PREMIO.viraISO||'')+'" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" onchange="autoSaveResp()"><span id="rcfgSaved" style="font-size:11.5px;color:var(--pos);opacity:.55;transition:opacity .3s">salva sozinho</span><button class="comm-cfg-btn" onclick="saveRespCfg()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)">fechar</button></div>';
