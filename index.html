@@ -3554,6 +3554,44 @@ function personById(id){ ensureResp(); return (PREMIO.responsaveis||[]).find(p=>
 function isDona(id){ const p=personById(id); return !!(p&&p.dona); }
 function respAliasMap(){ ensureResp(); const m={}; (PREMIO.responsaveis||[]).forEach(p=>{ (p.aliases||[]).forEach(a=>{ const k=String(a||'').toUpperCase().replace(/[^A-Z0-9]/g,''); if(!k) return; if(!m[k]) m[k]=[]; if(m[k].indexOf(p.id)<0) m[k].push(p.id); }); }); return m; }
 function prefixTok(t){ const tok=(String(t||'').trim().split(/[\s\-_:.|]+/)[0])||''; return tok.toUpperCase().replace(/[^A-Z0-9]/g,''); }
+// Live SEM SIGLA herda de quem estava ao vivo na MESMA loja no MESMO dia
+// (pedido do Gabriel: "ela fez às 9 e a das 10 na mesma loja tá sem título —
+// sabemos que é dela"). Herda só de sigla DIRETA (sem cascata); gravadas (GR)
+// não doam nem herdam; a marcação manual em Atribuir lives vence tudo.
+let _vizC=null;
+function _vizMap(){
+  ensureResp();
+  const stamp=String(PREMIO._m||0)+'|'+STORES.length+'|'+STORES.reduce((a,s)=>a+((s.regs||[]).length),0);
+  if(_vizC && _vizC.stamp===stamp) return _vizC.map;
+  const am=respAliasMap();
+  const tg=(PREMIO.tagsGravada||['GR']).map(t=>String(t||'').toUpperCase().replace(/[^A-Z0-9]/g,'')).filter(Boolean);
+  const map={};
+  STORES.forEach(s=>{
+    const regs=(s.regs||[]).slice().sort((a,b)=>String(a.dt||'').localeCompare(String(b.dt||'')));
+    const ultimo={}, pend={};
+    regs.forEach(r=>{
+      const words=String(r.tr||r.t||'').match(/[A-Za-z0-9À-ÿ]+/g)||[];
+      let grav=false; const ids=[];
+      for(let i=0;i<words.length;i++){
+        const k=words[i].toUpperCase().replace(/[^A-Z0-9]/g,'');
+        if(k && tg.indexOf(k)>=0){ grav=true; break; }
+        if(k && am[k]) am[k].forEach(id=>{ if(ids.indexOf(id)<0) ids.push(id); });
+      }
+      if(grav) return;
+      const vivos=ids.filter(id=>!isDona(id));
+      const d=r.d||'';
+      if(vivos.length){
+        ultimo[d]=vivos;
+        if(pend[d]){ pend[d].forEach(rid=>{ map[rid]=vivos; }); delete pend[d]; }
+      } else if(!ids.length && r.id){
+        if(ultimo[d]) map[r.id]=ultimo[d];
+        else (pend[d]=pend[d]||[]).push(r.id);
+      }
+    });
+  });
+  _vizC={stamp,map};
+  return map;
+}
 // Atribuição com DUPLA: se o nome da live tem 2+ siglas de pessoas diferentes
 // (ex.: "Sofá AL TC"), a live é das duas — o GMV divide igual (50/50),
 // a live e a duração contam para cada uma. Override manual continua single.
@@ -3581,6 +3619,8 @@ function resolveRespMulti(reg, storeId){
     const vivos=ids.filter(id=>!isDona(id));
     return vivos.length ? vivos : ['__sem__'];
   }
+  // sem sigla: herda da vizinha do mesmo dia/loja (das 9h AL -> a das 10h sem título é dela)
+  try{ const _h=_vizMap()[reg.id]; if(_h && _h.length) return _h.slice(); }catch(e){}
   if((reg.d||'') <= (PREMIO.viraISO||'')){
     const st=STORES.find(s=>s.id===storeId);
     if(st){ const p=(PREMIO.responsaveis||[]).find(pp=>pp.lojaFallback && pp.lojaFallback.toUpperCase()===String(st.name||'').toUpperCase()); if(p) return [p.dona ? '__sem__' : p.id]; }
@@ -3690,7 +3730,7 @@ function tagListItems(){
   const qv=((document.getElementById('tagFQ')||{}).value||'');
   TAG_FILTER={resp:rv,store:sov,q:qv};
   const q=qv.trim().toUpperCase(); const items=[];
-  STORES.forEach(s=>{ if(sov && s.id!==sov) return; filterRegsByMonth(s.regs,mr).forEach(r=>{ const ids=resolveRespMulti(r,s.id); const ovr=(PREMIO.overrides&&PREMIO.overrides[r.id]!=null)?String(PREMIO.overrides[r.id]):null; const cur=ovr!=null?ovr:ids[0]; if(rv!=='todos' && ids.indexOf(rv)<0) return; const nm=(r.tr||r.t||''); if(q && !nm.toUpperCase().includes(q)) return; items.push({r:r,s:s,cur:cur,nm:nm}); }); });
+  STORES.forEach(s=>{ if(sov && s.id!==sov) return; filterRegsByMonth(s.regs,mr).forEach(r=>{ const ids=resolveRespMulti(r,s.id); const ovr=(PREMIO.overrides&&PREMIO.overrides[r.id]!=null)?String(PREMIO.overrides[r.id]):null; const cur=ovr!=null?ovr:ids[0]; if(rv!=='todos' && ids.indexOf(rv)<0) return; const nm=(r.tr||r.t||''); if(q && !nm.toUpperCase().includes(q)) return; const herd=(ovr==null && (function(){ try{ return !!_vizMap()[r.id]; }catch(e){ return false; } })()); items.push({r:r,s:s,cur:cur,nm:nm,herd:herd}); }); });
   return items;
 }
 function renderTagList(){
@@ -3704,8 +3744,8 @@ function renderTagList(){
     var s=g.s;
     var logo=s.logo?'<span class="store-logo-card" style="background:url('+s.logo+') center/cover"></span>':'<span class="store-dot" style="background:'+(s.color||'#888')+'"></span>';
     var head='<div class="tag-store-head">'+logo+'<span class="tag-store-nm">'+s.name+'</span><span class="tag-store-ct">'+g.items.length+'</span></div>';
-    var rows=g.items.map(function(it){ var r=it.r, d=(r.d||'').split('-').reverse().join('/');
-      return '<div class="tag-row"><div class="tag-info"><div class="tag-title">'+(it.nm||'(sem título)')+'</div><div class="tag-meta">'+d+' · '+brl(r.g)+'</div></div>'+
+    var rows=g.items.sort(function(a,b){ return String(b.r.dt||'').localeCompare(String(a.r.dt||'')); }).map(function(it){ var r=it.r, d=(r.d||'').split('-').reverse().join('/'), hh=(r.dt||'').slice(11,16);
+      return '<div class="tag-row"><div class="tag-info"><div class="tag-title">'+(it.nm||'(sem título)')+'</div><div class="tag-meta">'+d+(hh?' · <b style="color:var(--text-2)">'+hh+'</b>':'')+' · '+brl(r.g)+(it.herd?' · <span style="color:var(--accent-2)">auto (vizinha)</span>':'')+'</div></div>'+
         '<select onchange="setOverrideRerender(\''+r.id+'\',this.value)"><option value="__auto__">(automático)</option><option value="__sem__"'+(it.cur==='__sem__'?' selected':'')+'>Sem responsável</option>'+peopleOpts(it.cur)+'</select></div>';
     }).join('');
     return '<div class="tag-store-grp">'+head+rows+'</div>';
@@ -4265,7 +4305,7 @@ function openRespCfg(){
   ensureResp();
   const list=(PREMIO.responsaveis||[]).map(rcfgRowHtml).join('');
   document.getElementById('respCfgBody').innerHTML=
-    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas (ou marque o par em <b>Atribuir lives</b>). Live <b>GRAVADA</b>: qualquer palavra do campo "Marcas de gravada" (ex.: <b>GR</b>) no nome manda a live pras Gravadas, mesmo com nome junto — "Franjas GR-LUA" é replay, não conta hora nem comissão.</div>'+
+    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas (ou marque o par em <b>Atribuir lives</b>). Live <b>GRAVADA</b>: qualquer palavra do campo "Marcas de gravada" (ex.: <b>GR</b>) no nome manda a live pras Gravadas, mesmo com nome junto — "Franjas GR-LUA" é replay, não conta hora nem comissão. Live <b>sem sigla</b> herda de quem estava ao vivo antes na mesma loja no mesmo dia (aparece como "auto (vizinha)" em Atribuir lives — corrija na mão se errar).</div>'+
     '<div id="rcfgList">'+list+'</div>'+
     '<button class="comm-cfg-btn" onclick="addRespRow()" style="margin:6px 0 14px">+ adicionar pessoa</button>'+
     '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px"><label style="font-size:12px;color:var(--text-3)">Data de virada (loja → prefixo):</label><input type="date" id="rcfgVira" value="'+(PREMIO.viraISO||'')+'" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" onchange="autoSaveResp()"><label style="font-size:12px;color:var(--text-3);margin-left:8px" title="Live com uma dessas palavras no nome é GRAVADA (replay) — não conta hora nem comissão de ninguém, mesmo com nome junto">Marcas de gravada:</label><input type="text" id="rcfgGrav" value="'+((PREMIO.tagsGravada||['GR']).join(', '))+'" placeholder="GR" style="width:110px;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" oninput="autoSaveResp()"><span id="rcfgSaved" style="font-size:11.5px;color:var(--pos);opacity:.55;transition:opacity .3s">salva sozinho</span><button class="comm-cfg-btn" onclick="saveRespCfg()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)">fechar</button></div>';
