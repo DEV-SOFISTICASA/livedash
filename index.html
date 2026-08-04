@@ -1444,7 +1444,15 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 // ════════════════════════════════════════════════════════
 // STORES = [{id, name, color, regs:[…]}]
 let STORES = [];
-let CURRENT_STORE_ID = STORES[0]?.id || null;
+function lojaPadrao(){
+  try{
+    var sv=localStorage.getItem('ld-cur-store');
+    if(sv==='_all_' && STORES.length>1) return '_all_';
+    if(sv && STORES.some(s=>s.id===sv)) return sv;
+  }catch(e){}
+  return STORES.length>1 ? '_all_' : (STORES[0]?.id || null);
+}
+let CURRENT_STORE_ID = lojaPadrao();
 let CURRENT_FILTER = {type:'all'};
 let pendingUpload = null;
 let pendingUpdateStoreId = null;
@@ -1599,7 +1607,7 @@ const AppState = {
   load(){
     const arr = this.loadStores();
     if(arr) STORES = arr;
-    if(STORES.length > 0 && !CURRENT_STORE_ID) CURRENT_STORE_ID = STORES[0].id;
+    if(STORES.length > 0 && !CURRENT_STORE_ID) CURRENT_STORE_ID = lojaPadrao();
     return !!arr;
   },
 
@@ -1667,7 +1675,7 @@ function IC(name, cls){ return '<svg class="ic' + (cls ? ' ' + cls : '') + '" ar
     // da nuvem ter dado REAL pra subir (e nunca subir {} vazio, que zerava tudo).
     try{ saveStores(); }catch(e){}
   }
-  if(STORES.length>0 && !CURRENT_STORE_ID) CURRENT_STORE_ID = STORES[0].id;
+  if(STORES.length>0 && !CURRENT_STORE_ID) CURRENT_STORE_ID = lojaPadrao();
 })();
 
 // ════════════════════════════════════════════════════════
@@ -1757,7 +1765,7 @@ function renderStoreSelector(){
     el.addEventListener('click', (e)=>{
       if(e.target.closest('.del') || e.target.closest('.logo-edit') || e.target.closest('.ss-update')) return;
       CURRENT_STORE_ID = el.dataset.id;
-      saveStores();
+      try{ localStorage.setItem('ld-cur-store', CURRENT_STORE_ID); }catch(e){}
       ssPop.classList.remove('open');
       ssEl.classList.remove('open');
       var _bd = document.getElementById('ssBackdrop'); if(_bd) _bd.classList.remove('open');
@@ -6097,7 +6105,7 @@ try{ setFilter({type:'today'}); }catch(e){}
 
       // aplica no painel (só em memória — não mexe no armazenamento manual)
       STORES = lojas;
-      CURRENT_STORE_ID = lojas[0].id;
+      CURRENT_STORE_ID = (typeof lojaPadrao==='function') ? lojaPadrao() : lojas[0].id;
       try{ renderStoreSelector(); }catch(e){}
       try{ buildPresets(); }catch(e){}
       try{ render(); }catch(e){}
