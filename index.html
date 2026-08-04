@@ -1633,9 +1633,15 @@ function saveStores(){ AppState.save(); }
 // Grava SÓ o PREMIO (pessoas/faixas/registros/overrides) — não arrasta STORES,
 // que pode estar substituído em memória pelas lives do robô e não deve poluir
 // o cache manual nem inflar o blob da nuvem. O hook de push cuida do sync.
-function savePremioOnly(){
+function savePremioOnly(stamp){
   try{
-    if(typeof PREMIO !== 'undefined') localStorage.setItem('la-premio', JSON.stringify(PREMIO));
+    if(typeof PREMIO !== 'undefined'){
+      // stamp=true em edição REAL do usuário (pessoas/faixas/marcações): o carimbo
+      // _m decide qual cadastro vence no sync entre aparelhos — nunca mais um
+      // celular com blob velho apaga pessoa recém-cadastrada no PC.
+      if(stamp) PREMIO._m = Date.now();
+      localStorage.setItem('la-premio', JSON.stringify(PREMIO));
+    }
     localStorage.setItem('la-stores-stamp', SNAPSHOT_STAMP);
   }catch(e){}
 }
@@ -3394,7 +3400,7 @@ function setRegistro(storeKey, mKey, semIdx, val){
   if(!PREMIO.registros[storeKey]) PREMIO.registros[storeKey] = {};
   if(!Array.isArray(PREMIO.registros[storeKey][mKey])) PREMIO.registros[storeKey][mKey] = [];
   PREMIO.registros[storeKey][mKey][semIdx] = val;
-  savePremioOnly();
+  savePremioOnly(true);
 }
 function fmtFaixaK(v){ return (v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0}); }
 function calcPremio(fat){
@@ -3629,7 +3635,7 @@ function peopleOpts(cur){
   }
   return out;
 }
-function setOverride(regId, val){ ensureResp(); if(!PREMIO.overrides) PREMIO.overrides={}; if(val==='__auto__'){ delete PREMIO.overrides[regId]; } else { PREMIO.overrides[regId]=val; } savePremioOnly(); }
+function setOverride(regId, val){ ensureResp(); if(!PREMIO.overrides) PREMIO.overrides={}; if(val==='__auto__'){ delete PREMIO.overrides[regId]; } else { PREMIO.overrides[regId]=val; } savePremioOnly(true); }
 
 let TAG_FILTER={resp:'todos',store:'',q:''};
 let TAG_MES=null;
@@ -3699,7 +3705,7 @@ function clearOverrides(){
   const n=Object.keys(PREMIO.overrides||{}).length;
   if(!n){ alert('Não há marcações manuais.'); return; }
   if(!confirm('Apagar TODAS as '+n+' marcações manuais? A atribuição volta a seguir só as regras (prefixo + loja-dona).')) return;
-  PREMIO.overrides={}; savePremioOnly(); renderTagList();
+  PREMIO.overrides={}; savePremioOnly(true); renderTagList();
 }
 function closeTagModal(){ document.getElementById('tagModal').style.display='none'; renderComissao(); }
 
@@ -4235,7 +4241,7 @@ function autoSaveResp(){
     PREMIO.responsaveis=arr;
     const v=document.getElementById('rcfgVira'); if(v && v.value) PREMIO.viraISO=v.value;
     if(PREMIO_PERSON_ID!=='__all__' && PREMIO_PERSON_ID!=='__INIT__' && !arr.some(x=>x.id===PREMIO_PERSON_ID)) PREMIO_PERSON_ID='__all__';
-    savePremioOnly();
+    savePremioOnly(true);
     const st=document.getElementById('rcfgSaved'); if(st){ st.textContent='salvo agora ✓'; st.style.opacity='1'; setTimeout(()=>{ st.style.opacity='.55'; },1200); }
     try{ renderComissao(); }catch(e){}
     try{ renderOvExtras(); }catch(e){}
@@ -4259,7 +4265,7 @@ function saveRespCfg(){
   PREMIO.responsaveis=arr;
   const v=document.getElementById('rcfgVira').value; if(v) PREMIO.viraISO=v;
   if(PREMIO_PERSON_ID!=='__all__' && !arr.some(x=>x.id===PREMIO_PERSON_ID)) PREMIO_PERSON_ID='__all__';
-  savePremioOnly(); document.getElementById('respCfgModal').style.display='none'; renderComissao();
+  savePremioOnly(true); document.getElementById('respCfgModal').style.display='none'; renderComissao();
   try{ renderOvExtras(); }catch(e){}
 }
 // ── comprovantes (imagem ou PDF) ──
@@ -4279,7 +4285,7 @@ function onCompFile(inp){
 }
 function saveComp(key,type,data,name){
   ensureResp(); PREMIO.comprovantes[key]={type:type,data:data,name:name||''};
-  try{ savePremioOnly(); }catch(e){ alert('Comprovante grande demais pra salvar (limite do navegador). Tenta uma imagem em vez de PDF.'); delete PREMIO.comprovantes[key]; return; }
+  try{ savePremioOnly(true); }catch(e){ alert('Comprovante grande demais pra salvar (limite do navegador). Tenta uma imagem em vez de PDF.'); delete PREMIO.comprovantes[key]; return; }
   renderComissao();
 }
 function viewComprovante(key){
@@ -4291,7 +4297,7 @@ function viewComprovante(key){
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px"><span style="color:var(--text-3);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(c.name||'')+'</span><button class="comm-cfg-btn danger" onclick="removeComprovante(\''+key+'\')">remover</button></div>';
   document.getElementById('compModal').style.display='flex';
 }
-function removeComprovante(key){ ensureResp(); delete PREMIO.comprovantes[key]; savePremioOnly(); document.getElementById('compModal').style.display='none'; renderComissao(); }
+function removeComprovante(key){ ensureResp(); delete PREMIO.comprovantes[key]; savePremioOnly(true); document.getElementById('compModal').style.display='none'; renderComissao(); }
 
 function ensureRegIds(){
   let changed=false, seq=0;
@@ -4591,7 +4597,7 @@ function savePremioConfig(){
   PREMIO.semanas = Math.max(1, Number(document.getElementById('premioSemanasInput').value) || 4);
   const fx = readFaixasFromUI().filter(f => f.min > 0).sort((a,b)=>a.min-b.min);
   PREMIO.faixas = fx.length ? fx : JSON.parse(JSON.stringify(DEFAULT_PREMIO.faixas));
-  savePremioOnly();
+  savePremioOnly(true);
   closeCommModal();
   toast('Salvo', 'Premiação atualizada', 'ok', 3000);
   renderComissao();
@@ -4632,7 +4638,7 @@ document.getElementById('premioReset')?.addEventListener('click', () => {
   PREMIO.inicioISO = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-01';
   PREMIO.registros = {};
   MES_OFFSET = 0;
-  savePremioOnly();
+  savePremioOnly(true);
   renderComissao();
   toast('Premiação', 'Contagem recomeçou neste mês', 'ok', 3500);
 });
@@ -5747,13 +5753,19 @@ try{ setFilter({type:'today'}); }catch(e){}
         if(hasLocalKeys) await cloudPush(true);
         return 'ok';
       }
+      // carimbo do cadastro de comissão: o la-premio com _m maior vence SEMPRE,
+      // independente de qual blob é "mais novo" (mudar tema num aparelho velho
+      // não pode rebaixar o cadastro de pessoas feito em outro)
+      function _premioM(js){ try{ var p=JSON.parse(js); return Number(p&&p._m)||0; }catch(e){ return 0; } }
       // 1) NUVEM MAIS NOVA que o local -> ela manda: restaura (mesmo VAZIA = deleção propaga) e recarrega
       if(cloudTime > localTime){
         restoring=true;
-        LA_KEYS.forEach(function(k){ if(blob && blob[k]!=null) localStorage.setItem(k, blob[k]); else localStorage.removeItem(k); });
-        try{ localStorage.setItem('la-mtime', String(cloudTime)); }catch(e){} // alinha relógio local c/ a nuvem (não re-sobe no reload)
+        var _keepPremio = _premioM(localStorage.getItem('la-premio')) > _premioM(blob ? blob['la-premio'] : null);
+        LA_KEYS.forEach(function(k){ if(k==='la-premio' && _keepPremio) return; if(blob && blob[k]!=null) localStorage.setItem(k, blob[k]); else localStorage.removeItem(k); });
         restoring=false;
         sessionStorage.setItem('sb-synced','1');
+        if(_keepPremio){ await cloudPush(true); } // devolve o cadastro mais novo pra nuvem antes de recarregar
+        else { try{ localStorage.setItem('la-mtime', String(cloudTime)); }catch(e){} } // alinha relógio local c/ a nuvem (não re-sobe no reload)
         location.reload();
         return 'reloaded';
       }
@@ -5763,6 +5775,10 @@ try{ setFilter({type:'today'}); }catch(e){}
         return 'ok';
       }
       // 3) LOCAL mais novo (edição real que não chegou a subir antes de fechar a aba) -> sobe
+      // ...mas se a NUVEM tiver um cadastro de comissão mais novo, adota antes de subir
+      if(blob && blob['la-premio']!=null && _premioM(blob['la-premio']) > _premioM(localStorage.getItem('la-premio'))){
+        restoring=true; localStorage.setItem('la-premio', blob['la-premio']); restoring=false;
+      }
       sessionStorage.setItem('sb-synced','1');
       await cloudPush(true);
       return 'ok';
@@ -5814,6 +5830,15 @@ try{ setFilter({type:'today'}); }catch(e){}
     function flush(){ if(pushTimer){ clearTimeout(pushTimer); pushTimer=null; } cloudPush(true); }
     document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='hidden') flush(); });
     window.addEventListener('pagehide', flush);
+    // Ao VOLTAR ao app (celular fica com a aba viva por dias): puxa a nuvem de novo
+    var _lastPull = Date.now();
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState==='visible' && Date.now()-_lastPull > 60000){
+        _lastPull = Date.now();
+        try{ sessionStorage.removeItem('sb-synced'); }catch(e){}
+        try{ cloudPull(); }catch(e){}
+      }
+    });
   }
 
   function doLogout(){
