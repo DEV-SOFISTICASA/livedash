@@ -3538,6 +3538,7 @@ let PREMIO_PERSON_ID='__all__';
 let COMP_TARGET=null;
 function ensureResp(){
   ensurePremio();
+  if(!Array.isArray(PREMIO.tagsGravada)) PREMIO.tagsGravada=['GR']; // marcas de replay no título
   if(!Array.isArray(PREMIO.responsaveis) || !PREMIO.responsaveis.length){
     PREMIO.responsaveis=[
       {id:'al',nome:'Alessandra',cor:'#7c5cff',aliases:['AL'],lojaFallback:'Monaco',dona:false},
@@ -3567,9 +3568,13 @@ function resolveRespMulti(reg, storeId){
   // "AL" casa com "AL", mas não com "ALS"/"ALMOFADA"/"kiTS".
   // Sigla cadastrada em 2+ pessoas (ex.: DUPLA) atribui a todas elas de uma vez.
   const words=String(reg.tr || reg.t || '').match(/[A-Za-z0-9À-ÿ]+/g) || [];
+  // marca de GRAVADA no título (ex.: GR) força o bucket Gravadas, mesmo com
+  // nome junto: "Franjas GR-LUA" é replay da Luana, não a Luana ao vivo.
+  const tg=(PREMIO.tagsGravada||['GR']).map(t=>String(t||'').toUpperCase().replace(/[^A-Z0-9]/g,'')).filter(Boolean);
   const ids=[];
   for(let i=0;i<words.length;i++){
     const k=words[i].toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(k && tg.indexOf(k)>=0) return ['__sem__'];
     if(k && am[k]) am[k].forEach(id=>{ if(ids.indexOf(id)<0) ids.push(id); });
   }
   if(ids.length){
@@ -4248,6 +4253,7 @@ function autoSaveResp(){
     if(!arr.length) return; // não zera o cadastro no meio da digitação
     PREMIO.responsaveis=arr;
     const v=document.getElementById('rcfgVira'); if(v && v.value) PREMIO.viraISO=v.value;
+    const gv=document.getElementById('rcfgGrav'); if(gv) PREMIO.tagsGravada=gv.value.split(',').map(x=>x.trim()).filter(Boolean);
     if(PREMIO_PERSON_ID!=='__all__' && PREMIO_PERSON_ID!=='__INIT__' && !arr.some(x=>x.id===PREMIO_PERSON_ID)) PREMIO_PERSON_ID='__all__';
     savePremioOnly(true);
     const st=document.getElementById('rcfgSaved'); if(st){ st.textContent='salvo agora ✓'; st.style.opacity='1'; setTimeout(()=>{ st.style.opacity='.55'; },1200); }
@@ -4259,10 +4265,10 @@ function openRespCfg(){
   ensureResp();
   const list=(PREMIO.responsaveis||[]).map(rcfgRowHtml).join('');
   document.getElementById('respCfgBody').innerHTML=
-    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas. Dica: cadastre a sigla <b>DUPLA</b> nas duas pessoas e toda live com "DUPLA" no nome já divide sozinha; ou marque a dupla na mão em <b>Atribuir lives</b>.</div>'+
+    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas (ou marque o par em <b>Atribuir lives</b>). Live <b>GRAVADA</b>: qualquer palavra do campo "Marcas de gravada" (ex.: <b>GR</b>) no nome manda a live pras Gravadas, mesmo com nome junto — "Franjas GR-LUA" é replay, não conta hora nem comissão.</div>'+
     '<div id="rcfgList">'+list+'</div>'+
     '<button class="comm-cfg-btn" onclick="addRespRow()" style="margin:6px 0 14px">+ adicionar pessoa</button>'+
-    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px"><label style="font-size:12px;color:var(--text-3)">Data de virada (loja → prefixo):</label><input type="date" id="rcfgVira" value="'+(PREMIO.viraISO||'')+'" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" onchange="autoSaveResp()"><span id="rcfgSaved" style="font-size:11.5px;color:var(--pos);opacity:.55;transition:opacity .3s">salva sozinho</span><button class="comm-cfg-btn" onclick="saveRespCfg()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)">fechar</button></div>';
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px"><label style="font-size:12px;color:var(--text-3)">Data de virada (loja → prefixo):</label><input type="date" id="rcfgVira" value="'+(PREMIO.viraISO||'')+'" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" onchange="autoSaveResp()"><label style="font-size:12px;color:var(--text-3);margin-left:8px" title="Live com uma dessas palavras no nome é GRAVADA (replay) — não conta hora nem comissão de ninguém, mesmo com nome junto">Marcas de gravada:</label><input type="text" id="rcfgGrav" value="'+((PREMIO.tagsGravada||['GR']).join(', '))+'" placeholder="GR" style="width:110px;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" oninput="autoSaveResp()"><span id="rcfgSaved" style="font-size:11.5px;color:var(--pos);opacity:.55;transition:opacity .3s">salva sozinho</span><button class="comm-cfg-btn" onclick="saveRespCfg()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)">fechar</button></div>';
   document.getElementById('respCfgModal').style.display='flex';
 }
 function saveRespCfg(){
@@ -4272,6 +4278,7 @@ function saveRespCfg(){
   if(_respSaveT){ clearTimeout(_respSaveT); _respSaveT=null; }
   PREMIO.responsaveis=arr;
   const v=document.getElementById('rcfgVira').value; if(v) PREMIO.viraISO=v;
+  const gv=document.getElementById('rcfgGrav'); if(gv) PREMIO.tagsGravada=gv.value.split(',').map(x=>x.trim()).filter(Boolean);
   if(PREMIO_PERSON_ID!=='__all__' && !arr.some(x=>x.id===PREMIO_PERSON_ID)) PREMIO_PERSON_ID='__all__';
   savePremioOnly(true); document.getElementById('respCfgModal').style.display='none'; renderComissao();
   try{ renderOvExtras(); }catch(e){}
