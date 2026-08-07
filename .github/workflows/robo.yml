@@ -1,9 +1,8 @@
 name: Robô LiveDash
 
 on:
-  schedule:
-    - cron: '25 * * * *'      # de hora em hora, no minuto :25 (repo público = grátis ilimitado)
-  workflow_dispatch:           # botão "Run workflow" — roda na hora
+  workflow_dispatch:           # backup MANUAL ("Run workflow") — o robô oficial roda 24/7
+                               # no worker do Render (livedash-robo, passe a cada ~6 min)
 
 # evita rodadas empilhadas se uma demorar
 concurrency:
