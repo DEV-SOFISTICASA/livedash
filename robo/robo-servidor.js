@@ -31,9 +31,22 @@ function parseLive(r, loja) {
 }
 
 async function coletarLoja(loja, storageState) {
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  // Flags de economia de memoria: o worker Starter do Render tem 512MB
+  // (no GitHub Actions eram 7GB e nada disso era preciso; la continua funcionando igual)
+  const browser = await chromium.launch({ headless: true, args: [
+    '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
+    '--disable-extensions', '--disable-features=site-per-process',
+    '--renderer-process-limit=2', '--no-zygote',
+  ] });
   const ctx = await browser.newContext({ storageState, locale: 'pt-BR', timezoneId: 'America/Sao_Paulo' });
   const page = await ctx.newPage();
+
+  // corta imagem/midia/fonte: a pagina so precisa RODAR o JS que assina a chamada
+  await page.route('**/*', (rt) => {
+    const t = rt.request().resourceType();
+    if (t === 'image' || t === 'media' || t === 'font') return rt.abort();
+    return rt.continue();
+  });
 
   // captura a URL assinada da chamada de lives que a pagina dispara sozinha
   let signedUrl = null;
