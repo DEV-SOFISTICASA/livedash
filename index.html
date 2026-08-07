@@ -6176,6 +6176,51 @@ try{ setFilter({type:'today'}); }catch(e){}
 </script>
 
 <script>
+/* ═══════ LiveDash · Placar ao vivo (sem F5) ═══════
+   A cada 3 min (com a aba visível) confere o updated_at das chaves tts_lives:*
+   e, SÓ se o robô gravou coisa nova, chama recarregarNuvem() — que já preserva
+   loja escolhida (ld-cur-store) e filtro atual. Pausa com editor/modal aberto. */
+(function(){
+  var CADA_MS = 3*60000, THROTTLE_MS = 60000;
+  var ultimaMarca = null, ultimaRodada = 0;
+
+  function ocupado(){
+    if(document.hidden) return true;
+    if(document.body.classList.contains('ed-on') || document.body.classList.contains('ed-mobile')) return true;
+    if(document.querySelector('.modal-bg.open, .modal.open')) return true;
+    return false;
+  }
+  async function marcaAtual(){
+    if(!window.__ldSB) return null;
+    try{
+      var res = await window.__ldSB.from('livedash_state').select('key,updated_at').like('key','tts_lives:%');
+      if(res.error || !res.data || !res.data.length) return null;
+      var m = '';
+      res.data.forEach(function(r){ if(r.updated_at && r.updated_at > m) m = r.updated_at; });
+      return m || null;
+    }catch(e){ return null; }
+  }
+  async function rodada(forcar){
+    if(ocupado()) return;
+    var agora = Date.now();
+    if(!forcar && agora - ultimaRodada < THROTTLE_MS) return;
+    ultimaRodada = agora;
+    var marca = await marcaAtual();
+    if(!marca) return;                        // sem login ainda: fica quieto
+    if(marca === ultimaMarca) return;         // robô não gravou nada novo
+    if(ocupado()) return;                     // re-checa depois do await
+    if(typeof window.recarregarNuvem !== 'function') return;
+    var ok = await window.recarregarNuvem();
+    if(ok){ ultimaMarca = marca; console.log('[ao-vivo] painel atualizado ('+marca+')'); }
+  }
+  // registra a marca do boot sem re-renderizar (só atualiza quando vier novidade)
+  setTimeout(function(){ marcaAtual().then(function(m){ if(m && !ultimaMarca) ultimaMarca = m; }); }, 12000);
+  setInterval(function(){ rodada(false); }, CADA_MS);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(function(){ rodada(true); }, 800); });
+})();
+</script>
+
+<script>
 /* ── Nav inferior do celular: atalho pra cada seção + destaque da seção visível ── */
 (function(){
   var IC={
