@@ -227,7 +227,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .modal-wide{max-width:560px}
 .modal-sub{font-size:13px;color:var(--text-3);margin-bottom:18px}
 
-/* ════ COMISSÃO ════ */
+/* ════ PREMIAÇÃO ════ */
 .week-nav{display:flex;align-items:center;gap:12px;justify-content:center}
 .week-btn{width:38px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'Inter',sans-serif}
 .week-btn:hover{border-color:var(--accent);color:var(--accent);transform:scale(1.05)}
@@ -306,7 +306,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .meta-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 @media(max-width:639px){.comm-cfg-since{width:100%;margin-bottom:2px;margin-right:0}.comm-cfg-btn{flex:1;text-align:center}.antecip-input{width:88px}}
 
-/* Tabela de comissão por loja */
+/* Tabela de premiação por loja */
 .comm-mode-pill{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--surface-3);color:var(--text-3);border:1px solid var(--border)}
 .comm-mode-pill.percentage{background:rgba(124,92,255,.12);color:var(--accent);border-color:rgba(124,92,255,.25)}
 .comm-mode-pill.tiers{background:rgba(95,168,211,.12);color:#5fa8d3;border-color:rgba(95,168,211,.25)}
@@ -322,7 +322,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .comm-delta.neg{color:var(--neg)}
 .comm-delta.neutral{color:var(--text-4)}
 
-/* MODAL COMISSÃO */
+/* MODAL PREMIAÇÃO */
 .comm-mode-tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--surface-2);padding:4px;border-radius:10px;border:1px solid var(--border)}
 .comm-mode-tab{flex:1;padding:9px 8px;border:none;background:transparent;color:var(--text-3);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border-radius:7px;transition:all .15s;text-align:center}
 .comm-mode-tab:hover{color:var(--text)}
@@ -917,7 +917,7 @@ body{ font-family:'Manrope',system-ui,-apple-system,sans-serif !important; }
   .page{padding-top:12px}
 }
 
-/* GMV por dia + Comissão por pessoa: no celular empilha SEMPRE,
+/* GMV por dia + Premiação por pessoa: no celular empilha SEMPRE,
    imune a span de bloco salvo no editor ou estado herdado de versão antiga */
 @media(max-width:820px){
   .ov-row{display:flex!important;flex-direction:column!important}
@@ -1113,7 +1113,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
   <!-- TABS -->
   <div class="tabs" id="tabs">
     <button class="tab active" data-tab="tudo"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg>Tudo</button>
-    <button class="tab" data-tab="comissao"><svg class="ic" aria-hidden="true"><use href="#i-coins"/></svg>Comissões</button>
+    <button class="tab" data-tab="comissao"><svg class="ic" aria-hidden="true"><use href="#i-coins"/></svg>Premiação</button>
   </div>
 
   <!-- VISÃO -->
@@ -1140,7 +1140,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
   <!-- LOJAS -->
   
 
-  <!-- ════ TAB: COMISSÃO ════ -->
+  <!-- ════ TAB: PREMIAÇÃO ════ -->
   <div class="tab-content active fade-flash" data-tab-content="visao"><div class="tudo-section-head">Visão Geral</div>
     <div class="ov-kpis">
       <div class="kpi ov-main">
@@ -1154,17 +1154,15 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
       <div class="kpi"><div class="kpi-lab">Novos seguidores</div><div class="kpi-val" id="kFollow">—</div><div class="ov-delta neutral" id="ovDFollow">—</div></div>
     </div>
 
-    <div class="ov-row">
-      <div class="card"><div class="card-pad">
+    <div class="card" data-ed-id="gmvdia" style="margin-bottom:14px"><div class="card-pad">
         <div class="card-head"><div><div class="card-title">GMV por dia</div><div class="card-sub" id="ovTrendSub">faturamento diário no período</div></div></div>
         <div class="chart-wrap tall"><canvas id="trendDia"></canvas></div>
         <div id="ovTrendDl" class="dl dl-mini"></div>
-      </div></div>
-      <div class="card"><div class="card-pad">
-        <div class="card-head"><div><div class="card-title">Comissão por pessoa</div><div class="card-sub" id="ovPremioSub">mês atual</div></div></div>
+    </div></div>
+    <div class="card" data-ed-id="premiacao" style="margin-bottom:14px"><div class="card-pad">
+        <div class="card-head"><div><div class="card-title">Premiação por pessoa</div><div class="card-sub" id="ovPremioSub">mês atual</div></div></div>
         <div id="ovPremio"></div>
-      </div></div>
-    </div>
+    </div></div>
 
     <div class="card" style="margin-bottom:14px"><div class="card-pad">
       <div class="card-head"><div><div class="card-title">Participação por loja</div><div class="card-sub" id="ovShareSub">share do GMV no período</div></div></div>
@@ -1301,7 +1299,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
       <div class="cm-actions" id="cmActions">
         <button class="cm-act" id="cmGearBtn" hidden title="Configurações da premiação (só admin vê)"><svg class="ic ic-sm"><use href="#i-gear"/></svg>Config</button>
         <div class="cm-tools" id="cmAdminTools" hidden>
-          <button class="cm-act" id="premioCfgBtn" title="Editar salário base e faixas de comissão"><svg class="ic ic-sm"><use href="#i-coins"/></svg>Faixas</button>
+          <button class="cm-act" id="premioCfgBtn" title="Editar salário base e faixas de premiação"><svg class="ic ic-sm"><use href="#i-coins"/></svg>Faixas</button>
           <button class="cm-act" id="premioRespBtn" title="Cadastrar pessoas, prefixos e regras" onclick="openRespCfg()"><svg class="ic ic-sm"><use href="#i-users"/></svg>Pessoas</button>
           <button class="cm-act" id="premioTagBtn" title="Revisar quem é a responsável de cada live" onclick="openTagModal()"><svg class="ic ic-sm"><use href="#i-user-check"/></svg>Atribuir lives</button>
           <button class="cm-act danger" id="premioReset" title="Zerar registros e começar a contar a partir deste mês"><svg class="ic ic-sm"><use href="#i-target"/></svg>Recomeçar</button>
@@ -1315,13 +1313,13 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
       <div class="cm-hero-glow"></div>
       <div class="cm-hero-top">
         <div>
-          <div class="cm-hero-label">Comissão do mês</div>
+          <div class="cm-hero-label">Premiação do mês</div>
           <div class="cm-hero-val"><span class="cur">R$</span><span id="commTotal">0,00</span></div>
         </div>
         <div class="comm-status aberta" id="commStatus"><span class="dot-live"></span>Mês em andamento</div>
       </div>
       <div class="cm-hero-stats">
-        <div class="cm-stat"><div class="l" title="Só lives com responsável — gravadas e donas não geram comissão">Faturamento atribuído</div><div class="v" id="commGmv">—</div></div>
+        <div class="cm-stat"><div class="l" title="Só lives com responsável — gravadas e donas não geram premiação">Faturamento atribuído</div><div class="v" id="commGmv">—</div></div>
         <div class="cm-stat"><div class="l">Faixa atual</div><div class="v" id="commBestDay">—</div></div>
         <div class="cm-stat"><div class="l">Lives</div><div class="v" id="commLives">0</div></div>
         <div class="cm-stat"><div class="l">Itens</div><div class="v" id="commItens">0</div></div>
@@ -1336,12 +1334,12 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
     <div class="cm-cards" id="commPessoas"></div>
 
     <!-- HISTÓRICO -->
-    <div class="section-label">Histórico de comissões</div>
+    <div class="section-label">Histórico de premiações</div>
     <div class="card"><div class="card-pad">
       <div class="card-head">
         <div>
           <div class="card-title">Histórico mensal — últimos 6 meses</div>
-          <div class="card-sub">Faturamento combinado e comissões por mês</div>
+          <div class="card-sub">Faturamento combinado e premiações por mês</div>
         </div>
       </div>
       <div class="table-wrap">
@@ -1368,7 +1366,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 <input type="file" id="compFile" accept="image/*,application/pdf" style="display:none" onchange="onCompFile(this)">
 <div class="modal-bg" id="tagModal" style="display:none" onclick="if(event.target===this)closeTagModal()"><div class="la-modal-inner"><div class="la-modal-head"><div class="la-modal-title">Marcar responsável</div><button class="la-modal-x" onclick="closeTagModal()">✕</button></div><div id="tagModalBody"></div></div></div>
 <div class="modal-bg" id="compModal" style="display:none" onclick="if(event.target===this)this.style.display=&#39;none&#39;"><div class="la-modal-inner" style="max-width:760px"><div class="la-modal-head"><div class="la-modal-title">Comprovante</div><button class="la-modal-x" onclick="document.getElementById(&#39;compModal&#39;).style.display=&#39;none&#39;">✕</button></div><div id="compModalBody"></div></div></div>
-<div class="modal-bg" id="respCfgModal" style="display:none" onclick="if(event.target===this)this.style.display=&#39;none&#39;"><div class="la-modal-inner"><div class="la-modal-head"><div class="la-modal-title">Pessoas &amp; regras da comissão</div><button class="la-modal-x" onclick="document.getElementById(&#39;respCfgModal&#39;).style.display=&#39;none&#39;">✕</button></div><div id="respCfgBody"></div></div></div>
+<div class="modal-bg" id="respCfgModal" style="display:none" onclick="if(event.target===this)this.style.display=&#39;none&#39;"><div class="la-modal-inner"><div class="la-modal-head"><div class="la-modal-title">Pessoas &amp; regras da premiação</div><button class="la-modal-x" onclick="document.getElementById(&#39;respCfgModal&#39;).style.display=&#39;none&#39;">✕</button></div><div id="respCfgBody"></div></div></div>
 <div class="modal-bg" id="commModal">
   <div class="modal modal-wide">
     <h3>Configurar premiação</h3>
@@ -2576,9 +2574,9 @@ function renderOvDeltas(allRegs, data){
   set('ovDFollow', sum(data,r=>r.nf), sum(prev,r=>r.nf), null, '%');
 }
 
-// ── VISÃO GERAL: comissão por pessoa (mês atual) + participação por loja (período) ──
+// ── VISÃO GERAL: premiação por pessoa (mês atual) + participação por loja (período) ──
 function renderOvExtras(){
-  // Comissão por pessoa — segue o FILTRO GLOBAL de período
+  // Premiação por pessoa — segue o FILTRO GLOBAL de período
   const elP = document.getElementById('ovPremio');
   if(elP){
     try{
@@ -2586,7 +2584,7 @@ function renderOvExtras(){
       const sub = document.getElementById('ovPremioSub');
       if(sub){
         const fl = (typeof window!=='undefined' && window.CURRENT_FILTER_LABEL) ? window.CURRENT_FILTER_LABEL : 'Tudo';
-        sub.textContent = 'vendas: ' + fl + ' · comissão: mês atual';
+        sub.textContent = 'vendas: ' + fl + ' · premiação: mês atual';
       }
       const stats = peopleStatsForFilter();
       const mrNow = getMonthRange(0);
@@ -2594,7 +2592,7 @@ function renderOvExtras(){
       const mesById = {}; statsMes.forEach(function(pp){ mesById[pp.id]=pp; });
       const people = stats.filter(p=>p.id!=='__sem__' && p.lives>0);
       let html = people.map(p=>{
-        const gmvMes = (mesById[p.id]||{gmv:0}).gmv; // comissão e faixa são SEMPRE do mês corrente
+        const gmvMes = (mesById[p.id]||{gmv:0}).gmv; // premiação e faixa são SEMPRE do mês corrente
         const inf = calcPremio(gmvMes);
         const nextMin = inf.next ? inf.next.alvo : null;
         const alvo = nextMin || Math.max(gmvMes, inf.aplicada ? inf.aplicada.min : 0) || 1;
@@ -2604,20 +2602,20 @@ function renderOvExtras(){
           + '<div class="ov-phead">'
           +   '<div class="ov-pavatar" style="background:'+(p.cor?('linear-gradient(135deg,'+p.cor+',var(--accent))'):'var(--grad)')+'">'+ini+'</div>'
           +   '<div><div class="ov-pname">'+p.nome+'</div><div class="ov-psub">'+p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar</div></div>'
-          +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div><div class="p">'+(inf.premio>0?('comissão do mês <strong>'+brl(inf.premio)+'</strong>'):'sem faixa no mês')+'</div></div>'
+          +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div><div class="p">'+(inf.premio>0?('premiação do mês <strong>'+brl(inf.premio)+'</strong>'):'sem faixa no mês')+'</div></div>'
           + '</div>'
           + '<div class="ov-track"><div class="ov-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
           + '<div class="ov-pfoot"><span>'+(inf.aplicada?('faixa '+inf.faixaLabel):'abaixo da 1ª faixa')+' · '+NOMES_MES[mrNow.month]+'</span><span>'+(inf.next?('próxima: '+brlk(inf.next.alvo)):'faixa máxima')+'</span></div>'
           + '</div>';
       }).join('');
-      // Gravadas: live sem sigla depois da virada (não é de ninguém, não tem comissão)
+      // Gravadas: live sem sigla depois da virada (não é de ninguém, não tem premiação)
       const grav = stats.find(p=>p.id==='__sem__');
       if(grav && grav.lives>0){
         html += '<div class="ov-prow" style="cursor:pointer" onclick="openTagModal()" title="Toque para atribuir manualmente">'
           + '<div class="ov-phead">'
           + '<div class="ov-pavatar" style="background:var(--grad,linear-gradient(135deg,var(--accent),#ec4899))">' + IC('video') + '</div>'
           + '<div><div class="ov-pname">Gravadas</div><div class="ov-psub">'+grav.lives+' live'+(grav.lives===1?'':'s')+' · '+fmtMinH(grav.min)+' no ar · sem sigla</div></div>'
-          + '<div class="ov-pval"><div class="g">'+brl(grav.gmv)+'</div><div class="p">sem comissão</div></div>'
+          + '<div class="ov-pval"><div class="g">'+brl(grav.gmv)+'</div><div class="p">sem premiação</div></div>'
           + '</div></div>';
       }
       // donas (fora do prêmio)
@@ -3333,7 +3331,7 @@ function renderLojasTab(){
 }
 
 // ════════════════════════════════════════════════════════
-// COMISSÃO
+// PREMIAÇÃO
 // ════════════════════════════════════════════════════════
 
 // Config default por loja: 2,5% porcentagem
@@ -3463,7 +3461,7 @@ function filterRegsByWeek(regs, weekRange){
   return regs.filter(r => r.d >= sISO && r.d <= eISO);
 }
 
-// ───────── Cálculo de comissão ─────────
+// ───────── Cálculo de premiação ─────────
 function getStoreCommConfig(store){
   if(!store.comm) store.comm = JSON.parse(JSON.stringify(DEFAULT_COMM_CONFIG));
   // Garantir todos os campos
@@ -3597,6 +3595,9 @@ function _vizMap(){
 // a live e a duração contam para cada uma. Override manual continua single.
 function resolveRespMulti(reg, storeId){
   ensureResp();
+  // A meta de premiação começou em PREMIO.inicioISO (jun/2026):
+  // antes disso é TUDO Gravada — sigla, herança e marcação manual não valem.
+  if(PREMIO.inicioISO && reg && reg.d && String(reg.d) < String(PREMIO.inicioISO)) return [];
   if(PREMIO.overrides && PREMIO.overrides[reg.id]!=null){
     const ov=String(PREMIO.overrides[reg.id]);
     return ov.indexOf('+')>0 ? ov.split('+') : [ov]; // marcação manual pode ser dupla ('al+tc')
@@ -3880,7 +3881,7 @@ function edInitSecTools(){
    - Lote 1: ordem das seções. hidden[] já existe no formato (UI vem no L2). */
 var LiveLayout = (function(){
   var KEYS = (typeof SEC_KEYS!=='undefined' && SEC_KEYS.length) ? SEC_KEYS.slice() : ['visao','lojas','dia','semana','quando','oque','performance','historico'];
-  var LABELS = { visao:'Visão Geral', dia:'Por Dia', semana:'Por Semana', quando:'Quando', oque:'O que vende', performance:'Performance', historico:'Histórico', lojas:'Lojas', comissao:'Comissões' };
+  var LABELS = { visao:'Visão Geral', dia:'Por Dia', semana:'Por Semana', quando:'Quando', oque:'O que vende', performance:'Performance', historico:'Histórico', lojas:'Lojas', comissao:'Premiação' };
   var CACHE = 'ld-layout';
   function dev(){ try{ return window.matchMedia('(max-width: 820px)').matches ? 'mobile' : 'pc'; }catch(e){ return 'pc'; } }
   function normProf(p){
@@ -4056,12 +4057,11 @@ function edGroupSection(k){
   kids.forEach(function(el){
     if(el.classList.contains('tudo-section-head')) return;
     if(el.classList.contains('cm-head')){ cur={name:'Cabeçalho do mês',id:'cab-mes',els:[el]}; groups.push(cur); return; }
-    if(el.classList.contains('hero')||el.classList.contains('cm-hero')){ groups.push({name:(el.classList.contains('cm-hero')?'Comissão do mês':'Destaque'),id:'hero',els:[el]}); cur=null; return; }
+    if(el.classList.contains('hero')||el.classList.contains('cm-hero')){ groups.push({name:(el.classList.contains('cm-hero')?'Premiação do mês':'Destaque'),id:'hero',els:[el]}); cur=null; return; }
     if(el.classList.contains('section-label')){ cur={name:el.textContent.trim()||'Bloco',id:edSlug(el.textContent),els:[el]}; groups.push(cur); return; }
     if(cur){ cur.els.push(el); return; }
     var nm;
     if(el.classList.contains('ov-kpis')) nm='Indicadores';
-    else if(el.classList.contains('ov-row')) nm='GMV por dia + Comissão';
     else { var ttl=el.querySelector?el.querySelector('.card-title'):null; nm=ttl?ttl.textContent.trim():'Bloco '+(groups.length+1); }
     var _eid=(el.getAttribute&&el.getAttribute('data-ed-id'))||('b'+groups.length);
     groups.push({name:nm,id:_eid,els:[el]});
@@ -4098,7 +4098,14 @@ var LiveBlocks=(function(){
   function writeCache(){ try{ localStorage.setItem(CACHE,JSON.stringify(ST)); }catch(e){} }
   function init(){ if(loaded) return; var c=readCache(); ST=c||{pc:{},mobile:{},_m:0}; loaded=true; }
   var editDev=null; function curDev(){ return editDev||dev(); }
-  function conf(k){ init(); var d=ST[curDev()]||{}; return normSec(d[k]); }
+  function conf(k){ init(); var d=ST[curDev()]||{}; var c=normSec(d[k]);
+    // migração: o bloco casado 'b1' (GMV+premiação) virou dois blocos separados
+    if(k==='visao' && c.o.indexOf('gmvdia')<0 && c.o.indexOf('b1')>=0){
+      var i=c.o.indexOf('b1'); c.o.splice(i,1,'gmvdia','premiacao');
+    }
+    if(k==='visao' && c.x.indexOf('b1')>=0){ c.x=c.x.filter(function(x){return x!=='b1';}); if(c.x.indexOf('gmvdia')<0) c.x.push('gmvdia','premiacao'); }
+    if(k==='visao' && c.s['b1']!=null && c.s.gmvdia==null){ c.s.gmvdia=c.s['b1']; delete c.s['b1']; }
+    return c; }
   function order(k){ return conf(k).o; }
   function key(){ return (window.LiveAccount&&LiveAccount.user&&LiveAccount.user())?'blocks:'+LiveAccount.user().id:null; }
   function canCloud(){ return !!(key()&&window.LiveAccount&&LiveAccount.rowGet&&LiveAccount.rowSet); }
@@ -4122,7 +4129,7 @@ function edApplySection(k){
   [].slice.call(sec.querySelectorAll(':scope > .ed-block')).forEach(function(b){
     var id=b.getAttribute('data-block');
     b.classList.toggle('ed-hidden', (c.x||[]).indexOf(id)>=0);
-    var sp=(c.s||{})[id];
+    var sp=(c.s||{})[id] || ({gmvdia:8, premiacao:4})[id]; // padrão ⅔+⅓ (antigo ov-row)
     if(sp && sp!==12){ b.style.setProperty('--sp', sp); } else { b.style.removeProperty('--sp'); }
     var hh=(c.h||{})[id];
     if(hh){ b.setAttribute('data-h',hh); } else { b.removeAttribute('data-h'); }
@@ -4305,10 +4312,10 @@ function openRespCfg(){
   ensureResp();
   const list=(PREMIO.responsaveis||[]).map(rcfgRowHtml).join('');
   document.getElementById('respCfgBody').innerHTML=
-    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas (ou marque o par em <b>Atribuir lives</b>). Live <b>GRAVADA</b>: qualquer palavra do campo "Marcas de gravada" (ex.: <b>GR</b>) no nome manda a live pras Gravadas, mesmo com nome junto — "Franjas GR-LUA" é replay, não conta hora nem comissão. Live <b>sem sigla</b> herda de quem estava ao vivo antes na mesma loja no mesmo dia (aparece como "auto (vizinha)" em Atribuir lives — corrija na mão se errar).</div>'+
+    '<div class="rcfg-hint">O <b>código no nome da live</b> manda na atribuição — vale em <b>qualquer posição</b>, contanto que seja uma <b>palavra inteira</b> (ex.: <b>AL</b> casa em "Kit Cozinha AL", mas <b>ALS</b> não). A <b>loja-dona</b> serve só pra puxar lives <b>antigas sem código</b> (até a data de virada). Marque <b>dona</b> em quem não entra no cálculo do prêmio. Live <b>sem sigla</b> depois da virada conta como <b>Gravada</b>. Live em <b>DUPLA</b>: escreva as duas siglas no nome — o valor divide 50/50 e a live conta pras duas (ou marque o par em <b>Atribuir lives</b>). Live <b>GRAVADA</b>: qualquer palavra do campo "Marcas de gravada" (ex.: <b>GR</b>) no nome manda a live pras Gravadas, mesmo com nome junto — "Franjas GR-LUA" é replay, não conta hora nem premiação. Live <b>sem sigla</b> herda de quem estava ao vivo antes na mesma loja no mesmo dia (aparece como "auto (vizinha)" em Atribuir lives — corrija na mão se errar).</div>'+
     '<div id="rcfgList">'+list+'</div>'+
     '<button class="comm-cfg-btn" onclick="addRespRow()" style="margin:6px 0 14px">+ adicionar pessoa</button>'+
-    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px"><label style="font-size:12px;color:var(--text-3)">Data de virada (loja → prefixo):</label><input type="date" id="rcfgVira" value="'+(PREMIO.viraISO||'')+'" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" onchange="autoSaveResp()"><label style="font-size:12px;color:var(--text-3);margin-left:8px" title="Live com uma dessas palavras no nome é GRAVADA (replay) — não conta hora nem comissão de ninguém, mesmo com nome junto">Marcas de gravada:</label><input type="text" id="rcfgGrav" value="'+((PREMIO.tagsGravada||['GR']).join(', '))+'" placeholder="GR" style="width:110px;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" oninput="autoSaveResp()"><span id="rcfgSaved" style="font-size:11.5px;color:var(--pos);opacity:.55;transition:opacity .3s">salva sozinho</span><button class="comm-cfg-btn" onclick="saveRespCfg()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)">fechar</button></div>';
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px"><label style="font-size:12px;color:var(--text-3)">Data de virada (loja → prefixo):</label><input type="date" id="rcfgVira" value="'+(PREMIO.viraISO||'')+'" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" onchange="autoSaveResp()"><label style="font-size:12px;color:var(--text-3);margin-left:8px" title="Live com uma dessas palavras no nome é GRAVADA (replay) — não conta hora nem premiação de ninguém, mesmo com nome junto">Marcas de gravada:</label><input type="text" id="rcfgGrav" value="'+((PREMIO.tagsGravada||['GR']).join(', '))+'" placeholder="GR" style="width:110px;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px" oninput="autoSaveResp()"><span id="rcfgSaved" style="font-size:11.5px;color:var(--pos);opacity:.55;transition:opacity .3s">salva sozinho</span><button class="comm-cfg-btn" onclick="saveRespCfg()" style="margin-left:auto;background:var(--accent);color:#fff;border-color:var(--accent)">fechar</button></div>';
   document.getElementById('respCfgModal').style.display='flex';
 }
 function saveRespCfg(){
@@ -4360,7 +4367,7 @@ function ensureRegIds(){
   if(PREMIO && PREMIO.overrides && Object.prototype.hasOwnProperty.call(PREMIO.overrides,'undefined')){ delete PREMIO.overrides['undefined']; changed=true; }
   if(changed && typeof saveStores==='function') saveStores();
 }
-// ── Cards de comissão (por pessoa ou por loja) ──
+// ── Cards de premiação (por pessoa ou por loja) ──
 function renderCommCards(mr){
   const el = document.getElementById('commPessoas');
   const lbl = document.getElementById('commGridLabel');
@@ -4381,7 +4388,7 @@ function renderCommCards(mr){
       +   '<div class="cm-card-id"><div class="n">'+o.nome+'</div><div class="s">'+o.sub+'</div></div>'
       + '</div>'
       + '<div class="cm-card-gmv"><span class="lab">Vendeu</span><span class="val">'+money(o.gmv)+'</span></div>'
-      + '<div class="cm-card-com"><span class="lab">Comissão</span><span class="val'+(inf.premio>0?' on':'')+'">'+(o.off?'não conta':(inf.premio>0?money(inf.premio):'—'))+'</span></div>'
+      + '<div class="cm-card-com"><span class="lab">Premiação</span><span class="val'+(inf.premio>0?' on':'')+'">'+(o.off?'não conta':(inf.premio>0?money(inf.premio):'—'))+'</span></div>'
       + (o.off ? '' :
         '<div class="ov-track"><div class="ov-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
         + '<div class="ov-pfoot"><span>'+(inf.aplicada?('faixa '+inf.faixaLabel):'abaixo da 1ª faixa')+'</span><span>'+(inf.next?('próxima: '+brlk(inf.next.alvo)):'máxima')+'</span></div>')
@@ -4490,7 +4497,7 @@ function renderComissao(){
   if(MES_OFFSET < 0){ statusEl.className = 'comm-status fechada'; statusEl.innerHTML = '✓ Mês fechado'; }
   else { statusEl.className = 'comm-status aberta'; statusEl.innerHTML = '<span class="dot-live"></span>Mês em andamento'; }
 
-  // hero — no modo pessoa+todos, a comissão do mês é a SOMA das comissões individuais
+  // hero — no modo pessoa+todos, a premiação do mês é a SOMA das premiações individuais
   let heroPremio = info.premio;
   let heroFaixa = info.aplicada ? info.faixaLabel : 'sem prêmio';
   if(PREMIO_MODE === 'pessoa' && PREMIO_PERSON_ID === '__all__'){
@@ -4524,7 +4531,7 @@ function renderComissao(){
     let best = null;
     _st.forEach(p=>{ const i2=calcPremio(p.gmv); if(i2.next && (!best || i2.next.falta < best.falta)){ best={nome:p.nome, falta:i2.next.falta, alvo:i2.next.alvo, novo:i2.next.novoPremio}; } });
     nextEl.innerHTML = best
-      ? IC('target') + ' Mais perto de subir: <strong>' + best.nome + '</strong> — faltam <strong>' + brl(best.falta) + '</strong> pra <strong>R$ ' + fmtFaixaK(best.alvo) + ' mil</strong> (comissão vai a <strong>' + brl(best.novo) + '</strong>)'
+      ? IC('target') + ' Mais perto de subir: <strong>' + best.nome + '</strong> — faltam <strong>' + brl(best.falta) + '</strong> pra <strong>R$ ' + fmtFaixaK(best.alvo) + ' mil</strong> (premiação vai a <strong>' + brl(best.novo) + '</strong>)'
       : '';
   } else if(info.next){
     nextEl.innerHTML = IC('target') + ' Faltam <strong>' + brl(info.next.falta) + '</strong> pra bater <strong>R$ ' + fmtFaixaK(info.next.alvo) + ' mil</strong> e subir o prêmio pra <strong>' + brl(info.next.novoPremio) + '</strong>';
@@ -4704,7 +4711,7 @@ document.getElementById('commModal')?.addEventListener('click', (e) => {
 // ════════════════════════════════════════════════════════
 // TABS
 // ════════════════════════════════════════════════════════
-var TUDO_SECTIONS = [['visao','Visão Geral'],['lojas','Lojas'],['dia','Por Dia'],['semana','Por Semana'],['quando','Quando'],['oque','O que vende'],['performance','Performance'],['historico','Histórico'],['comissao','Comissões']];
+var TUDO_SECTIONS = [['visao','Visão Geral'],['lojas','Lojas'],['dia','Por Dia'],['semana','Por Semana'],['quando','Quando'],['oque','O que vende'],['performance','Performance'],['historico','Histórico'],['comissao','Premiação']];
 var _tudoBuilt = false;
 function buildTudoNav(){
   if(_tudoBuilt) return;
@@ -5808,7 +5815,7 @@ try{ setFilter({type:'today'}); }catch(e){}
         if(hasLocalKeys) await cloudPush(true);
         return 'ok';
       }
-      // carimbo do cadastro de comissão: o la-premio com _m maior vence SEMPRE,
+      // carimbo do cadastro de premiação: o la-premio com _m maior vence SEMPRE,
       // independente de qual blob é "mais novo" (mudar tema num aparelho velho
       // não pode rebaixar o cadastro de pessoas feito em outro)
       function _premioM(js){ try{ var p=JSON.parse(js); return Number(p&&p._m)||0; }catch(e){ return 0; } }
@@ -5830,7 +5837,7 @@ try{ setFilter({type:'today'}); }catch(e){}
         return 'ok';
       }
       // 3) LOCAL mais novo (edição real que não chegou a subir antes de fechar a aba) -> sobe
-      // ...mas se a NUVEM tiver um cadastro de comissão mais novo, adota antes de subir
+      // ...mas se a NUVEM tiver um cadastro de premiação mais novo, adota antes de subir
       if(blob && blob['la-premio']!=null && _premioM(blob['la-premio']) > _premioM(localStorage.getItem('la-premio'))){
         restoring=true; localStorage.setItem('la-premio', blob['la-premio']); restoring=false;
       }
