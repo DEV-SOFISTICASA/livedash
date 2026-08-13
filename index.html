@@ -518,6 +518,34 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .cm-card-top{display:flex;align-items:center;gap:11px;margin-bottom:14px}
 .cm-card-id .n{font-weight:700;font-size:14px}
 .cm-card-id .s{font-size:11px;color:var(--text-3);margin-top:1px}
+/* ── Por Pessoa: card por pessoa + lista das lives dela ── */
+.pp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.pp-card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.pp-head{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--border)}
+.pp-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:14px;color:#fff;flex-shrink:0;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.pp-nome{flex:1;min-width:0;font-weight:700;font-size:14px;color:var(--text)}
+.pp-sts{display:block;font-weight:500;font-size:11.5px;color:var(--text-3);margin-top:2px}
+.pp-sts b{color:var(--text-2);font-family:'JetBrains Mono',monospace}
+.pp-gmv{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14.5px;color:var(--accent);white-space:nowrap}
+.pp-lives{max-height:320px;overflow:auto}
+.pp-live{display:flex;align-items:center;gap:8px;padding:7px 13px;font-size:12px;border-bottom:1px solid var(--border)}
+.pp-live:last-child{border-bottom:none}
+.pp-live:hover{background:var(--surface)}
+.pp-h{font-family:'JetBrains Mono',monospace;color:var(--text-3);white-space:nowrap;font-size:11.5px}
+.pp-h .pp-d{color:var(--text-4);margin-right:4px}
+.pp-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-2)}
+.pp-dupla{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#ffb020;
+  border:1px solid rgba(255,176,32,.4);border-radius:5px;padding:1px 4px;margin-left:6px;vertical-align:1px}
+.pp-loja{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--c,#7c5cff);border:1px solid currentColor;
+  border-radius:6px;padding:1px 6px;opacity:.85;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.pp-dur{font-family:'JetBrains Mono',monospace;color:var(--text-3);white-space:nowrap;font-size:11.5px}
+.pp-g{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text);white-space:nowrap;min-width:76px;text-align:right}
+@media(max-width:640px){
+  .pp-grid{grid-template-columns:1fr}
+  .pp-loja{display:none}
+  .pp-live{gap:6px;padding:7px 10px}
+}
 .cm-card-gmv,.cm-card-com{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:7px 0}
 .cm-card-gmv{border-bottom:1px dashed var(--border)}
 .cm-card-gmv .lab,.cm-card-com .lab{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3)}
@@ -1117,7 +1145,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
   </div>
 
   <!-- VISÃO -->
-  <div class="tudo-nav" id="tudoNav"><span class="tn-chip" data-go="visao">Visão Geral</span><span class="tn-chip" data-go="dia">Por Dia</span><span class="tn-chip" data-go="semana">Por Semana</span><span class="tn-chip" data-go="quando">Quando</span><span class="tn-chip" data-go="oque">O que vende</span><span class="tn-chip" data-go="performance">Performance</span><span class="tn-chip" data-go="historico">Histórico</span><span class="tn-chip" data-go="lojas">Lojas</span></div>
+  <div class="tudo-nav" id="tudoNav"><span class="tn-chip" data-go="visao">Visão Geral</span><span class="tn-chip" data-go="dia">Por Dia</span><span class="tn-chip" data-go="semana">Por Semana</span><span class="tn-chip" data-go="quando">Quando</span><span class="tn-chip" data-go="oque">O que vende</span><span class="tn-chip" data-go="performance">Performance</span><span class="tn-chip" data-go="historico">Histórico</span><span class="tn-chip" data-go="lojas">Lojas</span><span class="tn-chip" data-go="pessoas">Por Pessoa</span></div>
 
   <!-- POR DIA -->
   
@@ -1194,6 +1222,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
           <thead><tr>
             <th>#&nbsp;Loja</th>
             <th class="r">Lives</th><th class="r">Dias</th>
+            <th class="r">Horas</th><th class="r">R$/hora</th>
             <th class="r">GMV</th><th class="r">Itens</th>
             <th class="r">GMV/Live</th><th class="r" id="thFollows">Follows</th>
             <th class="r">% GMV</th>
@@ -1206,6 +1235,11 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
     <div class="card" style="margin-top:14px"><div class="card-pad">
       <div class="card-head"><div><div class="card-title">Tendência por loja</div><div class="card-sub" id="lojasSparkSub">GMV diário no período · uma linha por loja</div></div></div>
       <div id="lojasSparks" class="spark-grid"></div>
+    </div></div>
+  </div><div class="tab-content fade-flash active" data-tab-content="pessoas"><div class="tudo-section-head">Por Pessoa</div>
+    <div class="card"><div class="card-pad">
+      <div class="card-head"><div><div class="card-title">Lives por pessoa</div><div class="card-sub" id="pessoasSub">no período · todas as lojas</div></div></div>
+      <div id="pessoasList" class="pp-grid"></div>
     </div></div>
   </div><div class="tab-content active" data-tab-content="dia"><div class="tudo-section-head">Por Dia</div>
     <div class="card"><div class="card-pad">
@@ -2315,6 +2349,7 @@ function render(){
     document.querySelector('#prodTable tbody').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-4);padding:20px">Sem dados</td></tr>';
     { const _dl=document.getElementById('diaList'); if(_dl) _dl.innerHTML='<div class="cm-empty">Sem dados</div>'; }
     renderLojasTab();
+    renderPorPessoa();
     return;
   }
 
@@ -2417,6 +2452,7 @@ function render(){
   renderPorDia(data);
   renderPorSemana(data);
   renderLojasTab();
+  renderPorPessoa();
 }
 
 function renderEmptyState(){
@@ -2436,7 +2472,7 @@ function renderEmptyState(){
   // zera as demais seções (tabelas/heatmap baked) — senão mostram dados do seed antigo
   try{ Object.values(CHARTS).forEach(c=>c.destroy()); CHARTS={}; }catch(e){}
   var clr=function(sel,cols){ var t=document.querySelector(sel); if(t) t.innerHTML='<tr><td colspan="'+cols+'" style="text-align:center;color:var(--text-4);padding:20px">Sem dados</td></tr>'; };
-  { var _dl=document.getElementById('diaList'); if(_dl) _dl.innerHTML=''; } ['semanaList','histList'].forEach(function(id){ var e=document.getElementById(id); if(e) e.innerHTML=''; }); clr('#prodTable tbody',6); clr('#top20Table tbody',8);
+  { var _dl=document.getElementById('diaList'); if(_dl) _dl.innerHTML=''; } ['semanaList','histList','pessoasList'].forEach(function(id){ var e=document.getElementById(id); if(e) e.innerHTML=''; }); clr('#prodTable tbody',6); clr('#top20Table tbody',8);
   try{ if(document.getElementById('heatmap')) renderHeatmap([]); }catch(e){}
 }
 
@@ -3246,6 +3282,80 @@ function renderPorSemana(data){
 }
 
 // ════════════════════════════════════════════════════════
+// POR PESSOA — as lives de cada uma no período (todas as lojas)
+// Mesmas regras da premiação: dupla divide o GMV, GR/pré-meta = Gravadas,
+// donas ficam de fora. du está em MINUTOS.
+// ════════════════════════════════════════════════════════
+function ppEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function pessoasComLives(){
+  ensureResp();
+  const map={};
+  (PREMIO.responsaveis||[]).forEach(p=>{ if(p.dona) return;
+    map[p.id]={id:p.id,nome:p.nome,cor:p.cor||'#7c5cff',gmv:0,lives:0,min:0,regs:[]}; });
+  map['__sem__']={id:'__sem__',nome:'Gravadas',cor:'#9aa0aa',gmv:0,lives:0,min:0,regs:[]};
+  STORES.forEach(s=>{
+    filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{
+      const pids=resolveRespMulti(r,s.id), share=1/pids.length;
+      pids.forEach(pid=>{
+        if(isDona(pid)) return;
+        if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0,regs:[]};
+        const p=map[pid];
+        p.gmv+=(r.g||0)*share; p.lives++; p.min+=(r.du||0);
+        p.regs.push({r:r, loja:s.name, lojaCor:s.color||'#7c5cff', share:share});
+      });
+    });
+  });
+  const arr=Object.values(map).filter(x=>x.id!=='__sem__' && x.lives>0).sort((a,b)=>b.gmv-a.gmv);
+  if(map['__sem__'].lives>0) arr.push(map['__sem__']);
+  return arr;
+}
+
+function renderPorPessoa(){
+  const el=document.getElementById('pessoasList'); if(!el) return;
+  const sub=document.getElementById('pessoasSub');
+  const gente=pessoasComLives();
+  const fl=(typeof window!=='undefined' && window.CURRENT_FILTER_LABEL) ? window.CURRENT_FILTER_LABEL : 'Tudo';
+  if(sub) sub.textContent = gente.length
+    ? fl.toLowerCase()+' · '+gente.reduce((n,p)=>n+p.lives,0)+' lives · todas as lojas'
+    : fl.toLowerCase()+' · todas as lojas';
+  if(!gente.length){ el.innerHTML='<div class="cm-empty">Ninguém com live no período</div>'; return; }
+  // um dia só no período? então a data em cada linha é redundante
+  const dias={}; gente.forEach(p=>p.regs.forEach(x=>{ if(x.r.d) dias[x.r.d]=1; }));
+  const umDia=Object.keys(dias).length<=1;
+  el.innerHTML = gente.map(p=>{
+    const regs=p.regs.slice().sort((a,b)=>String(b.r.dt||b.r.d||'').localeCompare(String(a.r.dt||a.r.d||'')));
+    const linhas=regs.map(x=>{
+      const r=x.r;
+      const hora=(r.dt&&r.dt.length>=16)?r.dt.slice(11,16):'—';
+      const dia=(umDia||!r.d)?'':'<span class="pp-d">'+r.d.slice(8,10)+'/'+r.d.slice(5,7)+'</span>';
+      const dupla=x.share<1?'<span class="pp-dupla">dupla</span>':'';
+      const titulo=(r.t||'').trim()||'sem título';
+      return '<div class="pp-live">'
+        +'<span class="pp-h">'+dia+hora+'</span>'
+        +'<span class="pp-t" title="'+ppEsc(titulo)+'">'+ppEsc(titulo)+dupla+'</span>'
+        +'<span class="pp-loja" style="--c:'+x.lojaCor+'">'+ppEsc(x.loja||'')+'</span>'
+        +'<span class="pp-dur">'+(r.du?fmtMinH(r.du):'—')+'</span>'
+        +'<span class="pp-g">'+brl((r.g||0)*x.share)+'</span>'
+        +'</div>';
+    }).join('');
+    const ini=(p.nome||'?').trim().charAt(0).toUpperCase();
+    const porHora=p.min>0?' · <b>'+brl0(p.gmv/(p.min/60))+'</b>/h':'';
+    return '<div class="pp-card">'
+      +'<div class="pp-head">'
+        +'<span class="pp-av" style="background:'+p.cor+'">'+ppEsc(ini)+'</span>'
+        +'<div class="pp-nome">'+ppEsc(p.nome)
+          +'<span class="pp-sts"><b>'+p.lives+'</b> live'+(p.lives>1?'s':'')
+          +' · <b>'+fmtMinH(p.min)+'</b> no ar'+porHora+'</span></div>'
+        +'<span class="pp-gmv">'+brl(p.gmv)+'</span>'
+      +'</div>'
+      +'<div class="pp-lives">'+linhas+'</div>'
+    +'</div>';
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
 // ABA LOJAS — comparativo entre todas
 // ════════════════════════════════════════════════════════
 function renderLojasTab(){
@@ -3256,12 +3366,15 @@ function renderLojasTab(){
     const items = filtered.reduce((sum,r)=>sum+r.it,0);
     const follows = filtered.reduce((sum,r)=>sum+r.nf,0);
     const dias = new Set(filtered.map(r=>r.d)).size;
-    return { id:s.id, name:s.name, color:s.color, logo:s.logo, lives:filtered.length, gmv, items, follows, dias, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
+    const min = filtered.reduce((sum,r)=>sum+(r.du||0),0);   // du em MINUTOS
+    return { id:s.id, name:s.name, color:s.color, logo:s.logo, lives:filtered.length, gmv, items, follows, dias, min,
+             gmvHora: min>0?gmv/(min/60):0, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
   }).sort((a,b)=>b.gmv-a.gmv);
   const totalGmv = stats.reduce((s,x)=>s+x.gmv,0);
   const totalLives = stats.reduce((s,x)=>s+x.lives,0);
   const totalItems = stats.reduce((s,x)=>s+x.items,0);
   const totalFollows = stats.reduce((s,x)=>s+x.follows,0);
+  const totalMin = stats.reduce((s,x)=>s+x.min,0);
 
   // coluna Follows só aparece quando há dado (o robô do TikTok não coleta seguidores)
   const showF = totalFollows>0;
@@ -3276,18 +3389,22 @@ function renderLojasTab(){
       <td><span class="rk ${i<3?'top':''}">${i+1}</span> ${logoHtml}<span style="color:var(--text);font-weight:600">${s.name}</span></td>
       <td class="num r" data-label="Lives">${s.lives}</td>
       <td class="num r" data-label="Dias">${s.dias}</td>
+      <td class="num r" data-label="Horas">${s.min>0?fmtMinH(s.min):'—'}</td>
+      <td class="pos r" data-label="R$/hora">${s.min>0?brl0(s.gmvHora):'—'}</td>
       <td class="acc r" data-label="GMV">${brl(s.gmv)}</td>
       <td class="num r" data-label="Itens">${s.items}</td>
       <td class="pos r" data-label="GMV/Live">${brl(s.gmvLive)}</td>
       ${showF?`<td class="num r" data-label="Follows">${s.follows}</td>`:''}
       <td class="num r" data-label="% GMV"><span class="pct-cell"><span class="pct-track"><i style="width:${Math.min(100,pct).toFixed(1)}%"></i></span>${pct.toFixed(1)}%</span></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="${showF?8:7}" style="text-align:center;color:var(--text-4);padding:20px">Sem lojas adicionadas</td></tr>`;
+  }).join('') || `<tr><td colspan="${showF?10:9}" style="text-align:center;color:var(--text-4);padding:20px">Sem lojas adicionadas</td></tr>`;
 
   document.getElementById('lojasTfoot').innerHTML = stats.length>0 ? `<tr style="border-top:2px solid var(--border-2);background:var(--surface-2)">
     <td style="color:var(--text);font-weight:700">TOTAL</td>
     <td class="num r" data-label="Lives">${totalLives}</td>
     <td data-label="Dias"></td>
+    <td class="num r" data-label="Horas">${totalMin>0?fmtMinH(totalMin):'—'}</td>
+    <td class="pos r" data-label="R$/hora">${totalMin>0?brl0(totalGmv/(totalMin/60)):'—'}</td>
     <td class="acc r" data-label="GMV">${brl(totalGmv)}</td>
     <td class="num r" data-label="Itens">${totalItems}</td>
     <td data-label="GMV/Live"></td>
@@ -3800,7 +3917,7 @@ function applyAccent(hex){
 function toggleAccentPop(e){ if(e) e.stopPropagation(); const pop=document.getElementById('accentPop'); if(!pop) return; renderAccentSwatches(); pop.classList.toggle('open'); }
 document.addEventListener('click',function(e){ const pop=document.getElementById('accentPop'); const btn=document.getElementById('accentBtn'); if(pop&&pop.classList.contains('open')&&!pop.contains(e.target)&&e.target!==btn){ pop.classList.remove('open'); } });
 
-const SEC_KEYS=['visao','lojas','dia','semana','quando','oque','performance','historico','comissao'];
+const SEC_KEYS=['visao','lojas','pessoas','dia','semana','quando','oque','performance','historico','comissao'];
 function secParent(){ const el=document.querySelector('[data-tab-content="visao"]'); return el?el.parentNode:null; }
 function secEl(p,k){ return p?p.querySelector(':scope > [data-tab-content="'+k+'"]'):null; }
 function reportSections(){ const p=secParent(); if(!p) return []; return [].filter.call(p.children, function(el){ return el.getAttribute && SEC_KEYS.indexOf(el.getAttribute('data-tab-content')||'')>=0; }); }
@@ -3881,7 +3998,7 @@ function edInitSecTools(){
    - Lote 1: ordem das seções. hidden[] já existe no formato (UI vem no L2). */
 var LiveLayout = (function(){
   var KEYS = (typeof SEC_KEYS!=='undefined' && SEC_KEYS.length) ? SEC_KEYS.slice() : ['visao','lojas','dia','semana','quando','oque','performance','historico'];
-  var LABELS = { visao:'Visão Geral', dia:'Por Dia', semana:'Por Semana', quando:'Quando', oque:'O que vende', performance:'Performance', historico:'Histórico', lojas:'Lojas', comissao:'Premiação' };
+  var LABELS = { visao:'Visão Geral', dia:'Por Dia', semana:'Por Semana', quando:'Quando', oque:'O que vende', performance:'Performance', historico:'Histórico', lojas:'Lojas', pessoas:'Por Pessoa', comissao:'Premiação' };
   var CACHE = 'ld-layout';
   function dev(){ try{ return window.matchMedia('(max-width: 820px)').matches ? 'mobile' : 'pc'; }catch(e){ return 'pc'; } }
   function normProf(p){
@@ -4711,7 +4828,7 @@ document.getElementById('commModal')?.addEventListener('click', (e) => {
 // ════════════════════════════════════════════════════════
 // TABS
 // ════════════════════════════════════════════════════════
-var TUDO_SECTIONS = [['visao','Visão Geral'],['lojas','Lojas'],['dia','Por Dia'],['semana','Por Semana'],['quando','Quando'],['oque','O que vende'],['performance','Performance'],['historico','Histórico'],['comissao','Premiação']];
+var TUDO_SECTIONS = [['visao','Visão Geral'],['lojas','Lojas'],['pessoas','Por Pessoa'],['dia','Por Dia'],['semana','Por Semana'],['quando','Quando'],['oque','O que vende'],['performance','Performance'],['historico','Histórico'],['comissao','Premiação']];
 var _tudoBuilt = false;
 function buildTudoNav(){
   if(_tudoBuilt) return;
@@ -6037,6 +6154,7 @@ try{ setFilter({type:'today'}); }catch(e){}
       performance:'<path d="M3 17l5-5 4 4 7-8"/><path d="M16 8h4v4"/>',
       historico:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/>',
       lojas:'<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>',
+      pessoas:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
       comissao:'<path d="M12 2l2.4 6.2L21 9l-5 4 1.4 7L12 16l-5.4 4L8 13 3 9l6.6-.8z"/>'
     };
     function svg(k){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(IC[k]||IC.visao)+'</svg>'; }
@@ -6239,9 +6357,10 @@ try{ setFilter({type:'today'}); }catch(e){}
     performance:'<path d="M3 17l5-5 4 4 7-8"/><path d="M16 8h4v4"/>',
     historico:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/>',
     lojas:'<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>',
+      pessoas:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
     comissao:'<path d="M12 2l2.4 6.2L21 9l-5 4 1.4 7L12 16l-5.4 4L8 13 3 9l6.6-.8z"/>'
   };
-  var NM={visao:'Visão',dia:'Por Dia',semana:'Semana',quando:'Quando',oque:'Produtos',performance:'Perform.',historico:'Histórico',lojas:'Lojas',comissao:'Prêmios'};
+  var NM={visao:'Visão',dia:'Por Dia',semana:'Semana',quando:'Quando',oque:'Produtos',performance:'Perform.',historico:'Histórico',lojas:'Lojas',pessoas:'Pessoas',comissao:'Prêmios'};
   function svg(k){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(IC[k]||IC.visao)+'</svg>'; }
   var nav=null;
   function secoes(){ return document.querySelectorAll('.tab-content[data-tab-content]'); }
