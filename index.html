@@ -475,7 +475,8 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 #ovShare .ovs-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 #ovShare .ovs-nm{min-width:0;display:flex;flex-direction:column;line-height:1.25}
 #ovShare .ovs-n1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;color:var(--text)}
-#ovShare .ovs-lv{font-style:normal;font-size:9.5px;color:var(--text-4);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+#ovShare .ovs-lv{font-style:normal;font-size:9.5px;color:var(--text-4);font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+@media(max-width:640px){#ovShare .ovs-lv{letter-spacing:0;font-size:9px}}
 #ovShare .ov-spct{display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
 #ovShare .ov-spct b{font-size:12.5px;color:var(--text);font-weight:700}
 #ovShare .ov-spct em{font-style:normal;font-size:10px;color:var(--text-4)}
@@ -2673,7 +2674,8 @@ function renderOvExtras(){
     try{
       const rows = STORES.map(s=>{
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
-        return { name:s.name, color:s.color, logo:s.logo, gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length };
+        return { name:s.name, color:s.color, logo:s.logo, gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
+                 min: rs.reduce((a,r)=>a+(r.du||0),0) };   // du em MINUTOS → horas no ar
       }).filter(r=>r.gmv>0).sort((a,b)=>b.gmv-a.gmv);
       const tot = rows.reduce((a,r)=>a+r.gmv,0);
       // legenda (lista) ao lado do donut
@@ -2681,7 +2683,7 @@ function renderOvExtras(){
         const pct = tot>0 ? r.gmv/tot*100 : 0;
         const ic = r.logo ? '<span class="ovs-logo" style="background-image:url('+r.logo+')"></span>' : '<span class="ovs-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
         return '<div class="ov-srow" title="'+brl(r.gmv)+'">'
-          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+'</em></span></div>'
+          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em></span></div>'
           + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
           + '<div class="ov-spct"><b>'+brlk(r.gmv)+'</b><em>'+pct.toFixed(0)+'%</em></div>'
           + '</div>';
