@@ -38,6 +38,10 @@ async function coletarLoja(loja, storageState) {
     '--disable-extensions', '--disable-features=site-per-process',
     '--renderer-process-limit=2', '--no-zygote',
   ] });
+  // TUDO daqui pra baixo dentro de try/finally: se estourar no meio (page crash,
+  // erro da API), o browser PRECISA fechar — senão sobra Chromium zumbi, a memória
+  // acaba e o passe seguinte morre de "Page crashed" (foi o que travou 15/08).
+  try {
   const ctx = await browser.newContext({ storageState, locale: 'pt-BR', timezoneId: 'America/Sao_Paulo' });
   const page = await ctx.newPage();
 
@@ -57,7 +61,7 @@ async function coletarLoja(loja, storageState) {
   await page.goto(COMPASS, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
   const t0 = Date.now();
   while (!signedUrl && Date.now() - t0 < 45000) await page.waitForTimeout(1000);
-  if (!signedUrl) { await browser.close(); throw new Error('nao capturou a URL assinada (sessao pode ter expirado)'); }
+  if (!signedUrl) throw new Error('nao capturou a URL assinada (sessao pode ter expirado)');
 
   // A API do TikTok so expoe os ultimos ~180 dias. Busca a janela maxima (179 dias).
   const end = Date.now();
@@ -79,8 +83,10 @@ async function coletarLoja(loja, storageState) {
     for (const x of rooms) { if (!vistos.has(x.room_id)) { vistos.add(x.room_id); all.push(parseLive(x, loja)); } }
     p++;
   }
-  await browser.close();
   return all;
+  } finally {
+    await browser.close().catch(() => {});
+  }
 }
 
 async function lerHistorico(loja) {
