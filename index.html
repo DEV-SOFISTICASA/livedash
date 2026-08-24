@@ -6277,7 +6277,7 @@ try{ setFilter({type:'today'}); }catch(e){}
           logo: m.logo || undefined,
           regs: lives.map(regFromLive)
         };
-      }).filter(function(s){ return s.regs.length; });
+      });
       lojas.sort(function(a,b){ return b.regs.length - a.regs.length; });  // mais lives primeiro
       if(!lojas.length) return false;
 
