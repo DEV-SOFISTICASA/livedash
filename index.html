@@ -1739,9 +1739,9 @@ document.addEventListener('click', e=>{
 });
 
 function lvTagHtml(s){
+  // sem contagem de espectadores: o TikTok só dá o ACUMULADO, não o simultâneo — Gabriel mandou esquecer
   if(!lojaAoVivo(s))return '';
-  var v = s.aoVivoViews ? ' · ' + (s.aoVivoViews>=1000 ? (s.aoVivoViews/1000).toFixed(1).replace('.',',')+'k' : s.aoVivoViews) : '';
-  return '<span class="lvtag" title="Conta transmitindo agora'+(s.aoVivoViews?' · '+s.aoVivoViews.toLocaleString('pt-BR')+' espectadores até a última coleta (~6 min)':'')+'"><span class="lvdot"></span><span class="lvtxt">AO VIVO'+v+'</span></span>';
+  return '<span class="lvtag" title="Conta transmitindo agora (dado do robô, até ~6 min)"><span class="lvdot"></span><span class="lvtxt">AO VIVO</span></span>';
 }
 function lojaAoVivo(s){
   // o TikTok empurra o "fim" da live em andamento a cada coleta do robô:
