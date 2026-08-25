@@ -1743,6 +1743,19 @@ function lvTagHtml(s){
   if(!lojaAoVivo(s))return '';
   return '<span class="lvtag" title="Conta transmitindo agora (dado do robô, até ~6 min)"><span class="lvdot"></span><span class="lvtxt">AO VIVO</span></span>';
 }
+function pessoasAoVivoIds(){
+  var out = new Set();
+  try{
+    (STORES||[]).forEach(function(st){
+      if(!lojaAoVivo(st) || st.aoVivoRoom==null) return;
+      var reg = (st.regs||[]).find(function(x){ return String(x.id)===String(st.aoVivoRoom); });
+      if(!reg) return;
+      var pids = (typeof resolveRespMulti==='function') ? resolveRespMulti(reg, st.id) : [];
+      (pids && pids.length ? pids : ['__sem__']).forEach(function(p){ out.add(p); });
+    });
+  }catch(e){}
+  return out;
+}
 function lojaAoVivo(s){
   // o TikTok empurra o "fim" da live em andamento a cada coleta do robô:
   // fim há menos de 12 min (2 passes) = a conta está AO VIVO agora
@@ -2659,7 +2672,7 @@ function renderOvExtras(){
         return '<div class="ov-prow">'
           + '<div class="ov-phead">'
           +   '<div class="ov-pavatar" style="background:'+(p.cor?('linear-gradient(135deg,'+p.cor+',var(--accent))'):'var(--grad)')+'">'+ini+'</div>'
-          +   '<div><div class="ov-pname">'+p.nome+'</div><div class="ov-psub">'+p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar</div></div>'
+          +   '<div><div class="ov-pname">'+p.nome+(pessoasAoVivoIds().has(p.id)?lvTagHtml({ultimoFim:Date.now()}):'')+'</div><div class="ov-psub">'+p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar</div></div>'
           +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div><div class="p">'+(inf.premio>0?('premiação do mês <strong>'+brl(inf.premio)+'</strong>'):'sem faixa no mês')+'</div></div>'
           + '</div>'
           + '<div class="ov-track"><div class="ov-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
@@ -2672,7 +2685,7 @@ function renderOvExtras(){
         html += '<div class="ov-prow" style="cursor:pointer" onclick="openTagModal()" title="Toque para atribuir manualmente">'
           + '<div class="ov-phead">'
           + '<div class="ov-pavatar" style="background:var(--grad,linear-gradient(135deg,var(--accent),#ec4899))">' + IC('video') + '</div>'
-          + '<div><div class="ov-pname">Gravadas</div><div class="ov-psub">'+grav.lives+' live'+(grav.lives===1?'':'s')+' · '+fmtMinH(grav.min)+' no ar · sem sigla</div></div>'
+          + '<div><div class="ov-pname">Gravadas'+(pessoasAoVivoIds().has('__sem__')?lvTagHtml({ultimoFim:Date.now()}):'')+'</div><div class="ov-psub">'+grav.lives+' live'+(grav.lives===1?'':'s')+' · '+fmtMinH(grav.min)+' no ar · sem sigla</div></div>'
           + '<div class="ov-pval"><div class="g">'+brl(grav.gmv)+'</div><div class="p">sem premiação</div></div>'
           + '</div></div>';
       }
