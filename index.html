@@ -1022,6 +1022,11 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
   /* Esconder células vazias no mobile */
   body.ed-mobile tbody td:empty, body.ed-mobile tfoot td:empty{display:none}
 </style>
+<style id="lvlive">
+.lvtag{display:inline-flex;align-items:center;gap:5px;margin-left:8px;font-size:9px;font-weight:800;letter-spacing:.06em;color:#ff453a;background:rgba(255,69,58,.12);border:1px solid rgba(255,69,58,.35);border-radius:99px;padding:2px 8px;vertical-align:middle;white-space:nowrap}
+.lvdot{width:7px;height:7px;border-radius:50%;background:#ff453a;animation:lvpulse 1.5s ease-out infinite;flex:none}
+@keyframes lvpulse{0%{box-shadow:0 0 0 0 rgba(255,69,58,.55)}70%{box-shadow:0 0 0 6px rgba(255,69,58,0)}100%{box-shadow:0 0 0 0 rgba(255,69,58,0)}}
+</style>
 </head>
 <body class="tudo-mode"><aside class="ld-side"><div class="ld-brand"><div class="m"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 14l3-4 3 3 4-6"></path></svg></div><div><div class="nm">LiveDash</div><div class="tg">Tok &amp; Decor</div></div></div><nav class="ld-nav"><div class="h">Painel</div><div class="ld-i on" data-go="visao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg><span>Visão Geral</span></div><div class="ld-i" data-go="dia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M8 2v4M16 2v4"></path></svg><span>Por Dia</span></div><div class="ld-i" data-go="semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M7 13h4M7 17h8"></path></svg><span>Por Semana</span></div><div class="ld-i" data-go="quando"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span>Quando</span></div><div class="ld-i" data-go="oque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"></path><path d="M3 7v10l9 4 9-4V7"></path></svg><span>O que vende</span></div><div class="ld-i" data-go="performance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 7-8"></path><path d="M16 8h4v4"></path></svg><span>Performance</span></div><div class="ld-i" data-go="historico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 4v4h4"></path><path d="M12 8v4l3 2"></path></svg><span>Histórico</span></div><div class="ld-i" data-go="lojas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"></path></svg><span>Lojas</span></div><div class="ld-i" data-go="comissao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.2L21 9l-5 4 1.4 7L12 16l-5.4 4L8 13 3 9l6.6-.8z"></path></svg><span>Premiação</span></div></nav></aside>
 <div class="aurora">
@@ -1731,6 +1736,11 @@ document.addEventListener('click', e=>{
   if(!ssEl.contains(e.target)){ ssPop.classList.remove('open'); ssEl.classList.remove('open'); if(typeof syncSsBackdrop === 'function') syncSsBackdrop(); }
 });
 
+function lojaAoVivo(s){
+  // o TikTok empurra o "fim" da live em andamento a cada coleta do robô:
+  // fim há menos de 12 min (2 passes) = a conta está AO VIVO agora
+  return !!(s && s.ultimoFim && (Date.now() - s.ultimoFim) < 12*60*1000);
+}
 function renderStoreSelector(){
   // Header é SEMPRE fixo: "Live Analytics" + "LIVEDASH"
   document.getElementById('brandTitle').textContent = 'LIVEDASH';
@@ -1747,7 +1757,8 @@ function renderStoreSelector(){
 
   // Caso especial: "Todas as lojas"
   if(CURRENT_STORE_ID==='_all_'){
-    document.getElementById('ssCurrentName').textContent = 'Todas';
+    var _lv = STORES.filter(lojaAoVivo).length;
+    document.getElementById('ssCurrentName').innerHTML = 'Todas' + (_lv?' <span class="lvtag"><span class="lvdot"></span>'+_lv+' AO VIVO</span>':'');
     const sw = document.getElementById('ssSwatch');
     sw.style.cssText='';
     sw.style.background = 'var(--grad, linear-gradient(135deg, var(--accent), #ec4899))';
@@ -1761,7 +1772,7 @@ function renderStoreSelector(){
   } else {
     const cur = STORES.find(s=>s.id===CURRENT_STORE_ID) || STORES[0];
     CURRENT_STORE_ID = cur.id;
-    document.getElementById('ssCurrentName').textContent = cur.name;
+    document.getElementById('ssCurrentName').innerHTML = cur.name + (lojaAoVivo(cur)?' <span class="lvtag"><span class="lvdot"></span>AO VIVO</span>':'');
     const sw = document.getElementById('ssSwatch');
     sw.innerHTML=''; sw.style.display='';
     if(cur.logo){
@@ -1791,6 +1802,7 @@ function renderStoreSelector(){
     return `<div class="ss-item ${s.id===CURRENT_STORE_ID?'active':''}" data-id="${s.id}">
       ${logoHtml}
       <span class="name">${s.name}</span>
+      ${lojaAoVivo(s)?'<span class="lvtag"><span class="lvdot"></span>AO VIVO</span>':''}
       <span class="count">${s.regs.length}</span>
       <span class="logo-edit" onclick="event.stopPropagation();editStoreLogo('${s.id}')" title="Logo"><svg class="ic ic-sm"><use href="#i-camera"/></svg></span>
       <span class="del" onclick="event.stopPropagation();delStore('${s.id}')">✕</span>
@@ -3373,7 +3385,7 @@ function renderLojasTab(){
     const follows = filtered.reduce((sum,r)=>sum+r.nf,0);
     const dias = new Set(filtered.map(r=>r.d)).size;
     const min = filtered.reduce((sum,r)=>sum+(r.du||0),0);   // du em MINUTOS
-    return { id:s.id, name:s.name, color:s.color, logo:s.logo, lives:filtered.length, gmv, items, follows, dias, min,
+    return { id:s.id, name:s.name, color:s.color, logo:s.logo, ultimoFim:s.ultimoFim, lives:filtered.length, gmv, items, follows, dias, min,
              gmvHora: min>0?gmv/(min/60):0, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
   }).sort((a,b)=>b.gmv-a.gmv);
   const totalGmv = stats.reduce((s,x)=>s+x.gmv,0);
@@ -3392,7 +3404,7 @@ function renderLojasTab(){
     const pct = totalGmv>0?(s.gmv/totalGmv*100):0;
     return `
     <tr>
-      <td><span class="rk ${i<3?'top':''}">${i+1}</span> ${logoHtml}<span style="color:var(--text);font-weight:600">${s.name}</span></td>
+      <td><span class="rk ${i<3?'top':''}">${i+1}</span> ${logoHtml}<span style="color:var(--text);font-weight:600">${s.name}</span>${lojaAoVivo(s)?'<span class="lvtag"><span class="lvdot"></span>AO VIVO</span>':''}</td>
       <td class="num r" data-label="Lives">${s.lives}</td>
       <td class="num r" data-label="Dias">${s.dias}</td>
       <td class="num r" data-label="Horas">${s.min>0?fmtMinH(s.min):'—'}</td>
@@ -6269,12 +6281,18 @@ try{ setFilter({type:'today'}); }catch(e){}
         var lives = (row.data && row.data.lives) || [];
         var loja = row.key.replace('tts_lives:','');
         var m = meta[loja] || {};
+        var ultimoFim = 0;
+        for(var li=0; li<lives.length; li++){
+          var ft = +new Date(lives[li].finished_at || 0);
+          if(ft > ultimoFim) ultimoFim = ft;
+        }
         return {
           id: 'cloud_'+row.key.replace(/[^a-z0-9]/gi,''),
           cloudLoja: loja,
           name: m.name || nomeLoja(row.key),
           color: m.color || PAL[i % PAL.length],
           logo: m.logo || undefined,
+          ultimoFim: ultimoFim,
           regs: lives.map(regFromLive)
         };
       });
