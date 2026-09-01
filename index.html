@@ -1033,13 +1033,18 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .lvtag img{width:11px;height:11px;border-radius:3px;margin-right:1px;display:inline-block;vertical-align:-2px}
 .mkb.fb{font-size:8.5px;font-weight:800;letter-spacing:.06em;border-radius:6px;padding:2px 6px;background:rgba(238,77,45,.14);color:#ff8a5c;border:1px solid rgba(238,77,45,.40)}
 .ss-mkt{display:flex;gap:6px;padding:8px 12px 4px}
-.ss-mkt button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;border-radius:9px;border:1px solid var(--line,#2a3054);background:transparent;color:var(--text-3,#9aa0aa);cursor:pointer}
+.ss-mkt button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;border-radius:9px;border:1px solid var(--border-2);background:transparent;color:var(--text-3);cursor:pointer}
 .ss-mkt button img{width:13px;height:13px;border-radius:3px;display:block}
 .ss-mkt-hdr{position:absolute;top:calc(100% + 8px);right:0;left:auto;padding:0;z-index:60}
-.ss-mkt-hdr button{flex:none;background:var(--card,#12152a);border-color:var(--line,#2a3054);padding:6px 11px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.ss-mkt-hdr button.on{background:var(--accent,#7c5cff)}
-.ss-mkt button:hover{color:var(--text,#fff)}
-.ss-mkt button.on{background:var(--accent,#7c5cff);border-color:var(--accent,#7c5cff);color:#fff}
+.ss-mkt-hdr button{flex:none;background:var(--surface);border-color:var(--border-2);padding:6px 11px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.ss-mkt-hdr button.on{background:var(--accent);border-color:var(--accent)}
+.ss-mkt button:hover{color:var(--text)}
+.ss-mkt button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+@media(max-width:640px){
+  body.tem-mkts .store-selector{margin-bottom:46px}
+  .ss-mkt-hdr{top:calc(100% + 8px);left:0;right:auto;max-width:calc(100vw - 28px)}
+  .ss-mkt-hdr button{padding:6px 9px;font-size:10px}
+}
 @media(max-width:640px){#ovShare .lvtxt{display:none}#ovShare .lvtag{padding:2px 5px;margin-left:5px}}
 </style>
 </head>
@@ -1805,6 +1810,7 @@ function mktBadge(x){
   }).join('')+'</span>';
 }
 function pintaMkt(){
+  try{ document.body.classList.toggle('tem-mkts', temMix()); }catch(e){}
   document.querySelectorAll('.ss-mkt').forEach(function(bar){
     bar.style.display = temMix() ? 'flex' : 'none';
     bar.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.dataset.m===(LD_MKT||'all')); });
