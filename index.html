@@ -1027,6 +1027,13 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .lvdot{width:7px;height:7px;border-radius:50%;background:#ff453a;animation:lvpulse 1.5s ease-out infinite,lvblink 1.5s ease-in-out infinite;flex:none}
 @keyframes lvpulse{0%{box-shadow:0 0 0 0 rgba(255,69,58,.55)}70%{box-shadow:0 0 0 6px rgba(255,69,58,0)}100%{box-shadow:0 0 0 0 rgba(255,69,58,0)}}
 @keyframes lvblink{0%,100%{opacity:1}50%{opacity:.2}}
+.mkb{display:inline-block;margin-left:7px;font-size:8.5px;font-weight:800;letter-spacing:.06em;border-radius:6px;padding:2px 6px;vertical-align:middle;white-space:nowrap;flex:none}
+.mkb.tt{background:rgba(37,244,238,.10);color:#67e8f9;border:1px solid rgba(37,244,238,.30)}
+.mkb.shp{background:rgba(238,77,45,.14);color:#ff8a5c;border:1px solid rgba(238,77,45,.40)}
+.ss-mkt{display:flex;gap:6px;padding:8px 12px 4px}
+.ss-mkt button{flex:1;padding:7px 4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;border-radius:9px;border:1px solid var(--line,#2a3054);background:transparent;color:var(--text-3,#9aa0aa);cursor:pointer}
+.ss-mkt button:hover{color:var(--text,#fff)}
+.ss-mkt button.on{background:var(--accent,#7c5cff);border-color:var(--accent,#7c5cff);color:#fff}
 @media(max-width:640px){#ovShare .lvtxt{display:none}#ovShare .lvtag{padding:2px 5px;margin-left:5px}}
 </style>
 </head>
@@ -1099,7 +1106,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
         </div>
         <div class="ss-chev">▾</div>
         <div class="ss-popover" id="ssPopover">
-          <div class="ss-sheet-head">Trocar loja<span class="ss-sheet-close" onclick="closeStoreSheet()">✕</span></div><div id="ssList"><div style="padding:14px;text-align:center;color:var(--text-3);font-size:13px">Nenhuma loja adicionada</div></div>
+          <div class="ss-sheet-head">Trocar loja<span class="ss-sheet-close" onclick="closeStoreSheet()">✕</span></div><div class="ss-mkt" id="ssMkt" style="display:none"><button type="button" data-m="all">TODAS</button><button type="button" data-m="tt">TIKTOK</button><button type="button" data-m="shp">SHOPEE</button></div><div id="ssList"><div style="padding:14px;text-align:center;color:var(--text-3);font-size:13px">Nenhuma loja adicionada</div></div>
           <div class="ss-actions">
             <button class="ss-action-btn" onclick="if(window.recarregarNuvem)recarregarNuvem()">↻ Atualizar da nuvem</button>
           </div>
@@ -1738,6 +1745,46 @@ document.addEventListener('click', e=>{
   if(!ssEl.contains(e.target)){ ssPop.classList.remove('open'); ssEl.classList.remove('open'); if(typeof syncSsBackdrop === 'function') syncSsBackdrop(); }
 });
 
+// ---------- marketplace (TikTok x Shopee) ----------
+var LD_MKT = (function(){ try{ return localStorage.getItem('ld-mkt')||'all'; }catch(e){ return 'all'; } })();
+function temMix(){ return ((window.STORES_ALL||STORES)||[]).some(function(x){ return x && x.mkt==='shp'; }); }
+function filtraMkt(arr){
+  var m = LD_MKT||'all';
+  return m==='all' ? arr.slice() : arr.filter(function(x){ return (x.mkt||'tt')===m; });
+}
+function mktBadge(x){
+  if(!x || !x.mkt || !temMix()) return '';
+  return x.mkt==='shp'
+    ? '<span class="mkb shp" title="Loja da Shopee">SHP</span>'
+    : '<span class="mkb tt" title="Loja do TikTok">TK</span>';
+}
+function pintaMkt(){
+  var bar = document.getElementById('ssMkt');
+  if(!bar) return;
+  bar.style.display = temMix() ? 'flex' : 'none';
+  bar.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.dataset.m===(LD_MKT||'all')); });
+}
+function setMkt(m){
+  LD_MKT = (m==='tt'||m==='shp') ? m : 'all';
+  try{ localStorage.setItem('ld-mkt', LD_MKT); }catch(e){}
+  if(window.STORES_ALL){
+    STORES = filtraMkt(window.STORES_ALL);
+    if(CURRENT_STORE_ID!=='_all_' && !STORES.some(function(x){ return x.id===CURRENT_STORE_ID; })){
+      CURRENT_STORE_ID = STORES.length>1 ? '_all_' : ((STORES[0] && STORES[0].id) || null);
+      try{ localStorage.setItem('ld-cur-store', CURRENT_STORE_ID||''); }catch(e){}
+    }
+  }
+  try{ renderStoreSelector(); }catch(e){}
+  try{ buildPresets(); }catch(e){}
+  try{ render(); }catch(e){}
+  try{ renderComissao(); }catch(e){}
+}
+(function(){
+  var bar = document.getElementById('ssMkt');
+  if(bar) bar.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click', function(e){ e.stopPropagation(); setMkt(b.dataset.m); });
+  });
+})();
 function lvTagHtml(s){
   // sem contagem de espectadores: o TikTok só dá o ACUMULADO, não o simultâneo — Gabriel mandou esquecer
   if(!lojaAoVivo(s))return '';
@@ -1762,6 +1809,7 @@ function lojaAoVivo(s){
   return !!(s && s.ultimoFim && (Date.now() - s.ultimoFim) < 12*60*1000);
 }
 function renderStoreSelector(){
+  try{ pintaMkt(); }catch(e){}
   // Header é SEMPRE fixo: "Live Analytics" + "LIVEDASH"
   document.getElementById('brandTitle').textContent = 'LIVEDASH';
   const labelEl = document.querySelector('.brand-text .label');
@@ -1822,7 +1870,7 @@ function renderStoreSelector(){
     return `<div class="ss-item ${s.id===CURRENT_STORE_ID?'active':''}" data-id="${s.id}">
       ${logoHtml}
       <span class="name">${s.name}</span>
-      ${lvTagHtml(s)}
+      ${mktBadge(s)}${lvTagHtml(s)}
       <span class="count">${s.regs.length}</span>
       <span class="logo-edit" onclick="event.stopPropagation();editStoreLogo('${s.id}')" title="Logo"><svg class="ic ic-sm"><use href="#i-camera"/></svg></span>
       <span class="del" onclick="event.stopPropagation();delStore('${s.id}')">✕</span>
@@ -2708,7 +2756,7 @@ function renderOvExtras(){
     try{
       const rows = STORES.map(s=>{
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
-        return { name:s.name, color:s.color, logo:s.logo, ultimoFim:s.ultimoFim, aoVivoViews:s.aoVivoViews,
+        return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, ultimoFim:s.ultimoFim, aoVivoViews:s.aoVivoViews,
                  gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
                  min: rs.reduce((a,r)=>a+(r.du||0),0) };   // du em MINUTOS → horas no ar
       // entra quem VENDEU ou quem simplesmente FEZ LIVE (loja que ficou no ar sem vender
@@ -2720,7 +2768,7 @@ function renderOvExtras(){
         const pct = tot>0 ? r.gmv/tot*100 : 0;
         const ic = r.logo ? '<span class="ovs-logo" style="background-image:url('+r.logo+')"></span>' : '<span class="ovs-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
         return '<div class="ov-srow'+(r.gmv>0?'':' semvenda')+'" title="'+brl(r.gmv)+'">'
-          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em></span></div>'
+          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em></span></div>'
           + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
           + '<div class="ov-spct"><b>'+(r.gmv>0?brlk(r.gmv):'—')+'</b><em>'+(r.gmv>0?pct.toFixed(0)+'%':'sem venda')+'</em></div>'
           + '</div>';
@@ -3409,7 +3457,7 @@ function renderLojasTab(){
     const follows = filtered.reduce((sum,r)=>sum+r.nf,0);
     const dias = new Set(filtered.map(r=>r.d)).size;
     const min = filtered.reduce((sum,r)=>sum+(r.du||0),0);   // du em MINUTOS
-    return { id:s.id, name:s.name, color:s.color, logo:s.logo, ultimoFim:s.ultimoFim, aoVivoViews:s.aoVivoViews, lives:filtered.length, gmv, items, follows, dias, min,
+    return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, ultimoFim:s.ultimoFim, aoVivoViews:s.aoVivoViews, lives:filtered.length, gmv, items, follows, dias, min,
              gmvHora: min>0?gmv/(min/60):0, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
   }).sort((a,b)=>b.gmv-a.gmv);
   const totalGmv = stats.reduce((s,x)=>s+x.gmv,0);
@@ -3428,7 +3476,7 @@ function renderLojasTab(){
     const pct = totalGmv>0?(s.gmv/totalGmv*100):0;
     return `
     <tr>
-      <td><span class="rk ${i<3?'top':''}">${i+1}</span> ${logoHtml}<span style="color:var(--text);font-weight:600">${s.name}</span>${lvTagHtml(s)}</td>
+      <td><span class="rk ${i<3?'top':''}">${i+1}</span> ${logoHtml}<span style="color:var(--text);font-weight:600">${s.name}</span>${mktBadge(s)}${lvTagHtml(s)}</td>
       <td class="num r" data-label="Lives">${s.lives}</td>
       <td class="num r" data-label="Dias">${s.dias}</td>
       <td class="num r" data-label="Horas">${s.min>0?fmtMinH(s.min):'—'}</td>
@@ -6253,7 +6301,7 @@ try{ setFilter({type:'today'}); }catch(e){}
       gh: +l.gmv_hour || 0,
       ctr: ctrFrac*100, fr: 0,
       pc: Math.round(ctrFrac*ip), pi: ip,
-      nf: 0, lk: 0, cm: 0, sh: 0,
+      nf: 0, lk: +l.likes||0, cm: +l.comments||0, sh: 0,
       avd: +l.avg_watch_s || 0
     };
   }
@@ -6264,13 +6312,13 @@ try{ setFilter({type:'today'}); }catch(e){}
     // usa o cliente logado do app (RLS libera pra usuário autenticado)
     if(window.__ldSB){
       try{
-        var res = await window.__ldSB.from('livedash_state').select('key,data').like('key','tts_lives:%');
+        var res = await window.__ldSB.from('livedash_state').select('key,data').or('key.like.tts_lives:*,key.like.shp_lives:*');
         if(!res.error && res.data) return res.data;
       }catch(e){}
     }
     // fallback: fetch anônimo (só funciona se o RLS liberar leitura pública)
     try{
-      var r = await fetch(URL_SB + '/rest/v1/livedash_state?key=like.tts_lives:*&select=key,data', { headers:{ apikey:ANON, Authorization:'Bearer '+ANON } });
+      var r = await fetch(URL_SB + '/rest/v1/livedash_state?or=(key.like.tts_lives:*,key.like.shp_lives:*)&select=key,data', { headers:{ apikey:ANON, Authorization:'Bearer '+ANON } });
       if(r.ok) return await r.json();
     }catch(e){}
     return null;
@@ -6303,8 +6351,10 @@ try{ setFilter({type:'today'}); }catch(e){}
       var meta = await lerMeta();
       var lojas = rows.map(function(row, i){
         var lives = (row.data && row.data.lives) || [];
-        var loja = row.key.replace('tts_lives:','');
-        var m = meta[loja] || {};
+        var ehShp = row.key.indexOf('shp_lives:')===0;
+        var loja = row.key.replace(/^(tts|shp)_lives:/,'');
+        var metaKey = ehShp ? ('shp:'+loja) : loja;   // logo/cor separados por plataforma
+        var m = meta[metaKey] || {};
         var ultimoFim = 0, vivoViews = 0, vivoRoom = null;
         for(var li=0; li<lives.length; li++){
           var ft = +new Date(lives[li].finished_at || 0);
@@ -6312,8 +6362,9 @@ try{ setFilter({type:'today'}); }catch(e){}
         }
         return {
           id: 'cloud_'+row.key.replace(/[^a-z0-9]/gi,''),
-          cloudLoja: loja,
-          name: m.name || nomeLoja(row.key),
+          cloudLoja: metaKey,
+          mkt: ehShp ? 'shp' : 'tt',
+          name: m.name || loja.toUpperCase(),
           color: m.color || PAL[i % PAL.length],
           logo: m.logo || undefined,
           ultimoFim: ultimoFim,
@@ -6326,7 +6377,8 @@ try{ setFilter({type:'today'}); }catch(e){}
       if(!lojas.length) return false;
 
       // aplica no painel (só em memória — não mexe no armazenamento manual)
-      STORES = lojas;
+      window.STORES_ALL = lojas;
+      STORES = (typeof filtraMkt==='function') ? filtraMkt(lojas) : lojas;
       CURRENT_STORE_ID = (typeof lojaPadrao==='function') ? lojaPadrao() : lojas[0].id;
       try{ renderStoreSelector(); }catch(e){}
       try{ buildPresets(); }catch(e){}
@@ -6368,7 +6420,7 @@ try{ setFilter({type:'today'}); }catch(e){}
   async function marcaAtual(){
     if(!window.__ldSB) return null;
     try{
-      var res = await window.__ldSB.from('livedash_state').select('key,updated_at').like('key','tts_lives:%');
+      var res = await window.__ldSB.from('livedash_state').select('key,updated_at').or('key.like.tts_lives:*,key.like.shp_lives:*');
       if(res.error || !res.data || !res.data.length) return null;
       var m = '';
       res.data.forEach(function(r){ if(r.updated_at && r.updated_at > m) m = r.updated_at; });
