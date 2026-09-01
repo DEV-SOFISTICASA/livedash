@@ -1035,15 +1035,23 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .ss-mkt{display:flex;gap:6px;padding:8px 12px 4px}
 .ss-mkt button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;border-radius:9px;border:1px solid var(--border-2);background:transparent;color:var(--text-3);cursor:pointer}
 .ss-mkt button img{width:13px;height:13px;border-radius:3px;display:block}
-.ss-mkt-hdr{position:absolute;top:calc(100% + 8px);right:0;left:auto;padding:0;z-index:60}
-.ss-mkt-hdr button{flex:none;background:var(--surface);border-color:var(--border-2);padding:6px 11px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
-.ss-mkt-hdr button.on{background:var(--accent);border-color:var(--accent)}
 .ss-mkt button:hover{color:var(--text)}
 .ss-mkt button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.mkt-selector{position:absolute;top:calc(100% + 8px);right:0;z-index:60;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;background:var(--surface);height:36px;padding:0 12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;user-select:none}
+.mkt-selector:hover{border-color:var(--border-hover)}
+.mkt-selector img{width:14px;height:14px;border-radius:3px;display:block}
+.mkt-cur{display:inline-flex;gap:3px;align-items:center}
+.mkt-pop{display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:210px;background:var(--surface);border:1px solid var(--border-2);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.25);padding:6px;z-index:80}
+.mkt-selector.open .mkt-pop{display:block}
+.mkt-item{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:8px;font-size:13px;color:var(--text)}
+.mkt-item:hover{background:var(--surface-2)}
+.mkt-item .mkt-check{margin-left:auto;color:var(--accent);opacity:0;font-weight:800}
+.mkt-item.on .mkt-check{opacity:1}
+.mkt-item.on{background:var(--accent-bg)}
 @media(max-width:640px){
   body.tem-mkts .store-selector{margin-bottom:46px}
-  .ss-mkt-hdr{top:calc(100% + 8px);left:0;right:auto;max-width:calc(100vw - 28px)}
-  .ss-mkt-hdr button{padding:6px 9px;font-size:10px}
+  .mkt-selector{left:0;right:auto}
+  .mkt-selector .mkt-pop{left:0;right:auto}
 }
 @media(max-width:640px){#ovShare .lvtxt{display:none}#ovShare .lvtag{padding:2px 5px;margin-left:5px}}
 </style>
@@ -1122,7 +1130,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
             <button class="ss-action-btn" onclick="if(window.recarregarNuvem)recarregarNuvem()">↻ Atualizar da nuvem</button>
           </div>
         </div>
-        <div class="ss-mkt ss-mkt-hdr" id="ssMktHdr" style="display:none"><button type="button" data-m="all">TODAS</button><button type="button" data-m="tt"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt="">TIKTOK</button><button type="button" data-m="shp"><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt="">SHOPEE</button></div>
+        <div class="mkt-selector" id="mktSelector" style="display:none"><span class="mkt-cur" id="mktCur"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""></span><span id="mktCurNome">Todas</span><span class="ss-chev">▾</span><div class="mkt-pop" id="mktPop"><div class="mkt-item" data-m="all"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""><span>Todas as plataformas</span><span class="mkt-check">✓</span></div><div class="mkt-item" data-m="tt"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><span>TikTok</span><span class="mkt-check">✓</span></div><div class="mkt-item" data-m="shp"><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""><span>Shopee</span><span class="mkt-check">✓</span></div></div></div>
       </div>
       <!-- Date filter movido pra abaixo das tabs -->
       <div class="accent-pick"><button class="theme-toggle" id="accentBtn" onclick="toggleAccentPop(event)" title="Cor de destaque"><svg class="ic"><use href="#i-palette"/></svg></button><div class="accent-pop" id="accentPop"><button class="accent-sw" style="background:#7c5cff" onclick="applyAccent(&#39;#7c5cff&#39;)" title="Roxo"></button><button class="accent-sw" style="background:#e5489a" onclick="applyAccent(&#39;#e5489a&#39;)" title="Magenta"></button><button class="accent-sw" style="background:#ec4899" onclick="applyAccent(&#39;#ec4899&#39;)" title="Rosa"></button><button class="accent-sw" style="background:#ef4444" onclick="applyAccent(&#39;#ef4444&#39;)" title="Vermelho"></button><button class="accent-sw" style="background:#f59e0b" onclick="applyAccent(&#39;#f59e0b&#39;)" title="Laranja"></button><button class="accent-sw" style="background:#16a34a" onclick="applyAccent(&#39;#16a34a&#39;)" title="Verde"></button><button class="accent-sw" style="background:#0891b2" onclick="applyAccent(&#39;#0891b2&#39;)" title="Azul"></button><button class="accent-sw active" style="background:#4f46e5" onclick="applyAccent(&#39;#4f46e5&#39;)" title="Índigo"></button><button class="accent-sw" style="background:#14b8a6" onclick="applyAccent(&#39;#14b8a6&#39;)" title="Petróleo"></button><button class="accent-sw" style="background:#06b6d4" onclick="applyAccent(&#39;#06b6d4&#39;)" title="Ciano"></button><button class="accent-sw" style="background:#10b981" onclick="applyAccent(&#39;#10b981&#39;)" title="Esmeralda"></button><button class="accent-sw" style="background:#65a30d" onclick="applyAccent(&#39;#65a30d&#39;)" title="Lima"></button><button class="accent-sw" style="background:#d97706" onclick="applyAccent(&#39;#d97706&#39;)" title="Âmbar"></button><button class="accent-sw" style="background:#f43f5e" onclick="applyAccent(&#39;#f43f5e&#39;)" title="Coral"></button><button class="accent-sw" style="background:#8b5cf6" onclick="applyAccent(&#39;#8b5cf6&#39;)" title="Lavanda"></button><button class="accent-sw" style="background:#0ea5e9" onclick="applyAccent(&#39;#0ea5e9&#39;)" title="Céu"></button><button class="accent-sw" style="background:#c026d3" onclick="applyAccent(&#39;#c026d3&#39;)" title="Fúcsia"></button><button class="accent-sw" style="background:#64748b" onclick="applyAccent(&#39;#64748b&#39;)" title="Grafite"></button></div></div>
@@ -1815,6 +1823,17 @@ function pintaMkt(){
     bar.style.display = temMix() ? 'flex' : 'none';
     bar.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.dataset.m===(LD_MKT||'all')); });
   });
+  var sel = document.getElementById('mktSelector');
+  if(sel){
+    sel.style.display = temMix() ? 'inline-flex' : 'none';
+    var m = LD_MKT||'all';
+    var cur = document.getElementById('mktCur'), nomeEl = document.getElementById('mktCurNome');
+    var TT = '<img src="https://www.google.com/s2/favicons?domain=tiktok.com&sz=64" alt="">';
+    var SH = '<img src="https://www.google.com/s2/favicons?domain=shopee.com.br&sz=64" alt="">';
+    if(cur) cur.innerHTML = m==='tt' ? TT : (m==='shp' ? SH : TT+SH);
+    if(nomeEl) nomeEl.textContent = m==='tt' ? 'TikTok' : (m==='shp' ? 'Shopee' : 'Todas');
+    sel.querySelectorAll('.mkt-item').forEach(function(it){ it.classList.toggle('on', it.dataset.m===m); });
+  }
 }
 function setMkt(m){
   LD_MKT = (m==='tt'||m==='shp') ? m : 'all';
@@ -1835,6 +1854,16 @@ function setMkt(m){
   document.querySelectorAll('.ss-mkt button').forEach(function(b){
     b.addEventListener('click', function(e){ e.stopPropagation(); setMkt(b.dataset.m); });
   });
+  var sel = document.getElementById('mktSelector');
+  if(sel){
+    sel.addEventListener('click', function(e){
+      var it = e.target.closest ? e.target.closest('.mkt-item') : null;
+      e.stopPropagation();
+      if(it){ sel.classList.remove('open'); setMkt(it.dataset.m); return; }
+      sel.classList.toggle('open');
+    });
+    document.addEventListener('click', function(){ sel.classList.remove('open'); });
+  }
 })();
 function lvTagHtml(s){
   // sem contagem de espectadores: o TikTok só dá o ACUMULADO, não o simultâneo — Gabriel mandou esquecer
