@@ -115,7 +115,8 @@ function shpParseLive(o, loja) {
     started_at: new Date(ini).toISOString(),
     finished_at: new Date(fim).toISOString(),
     duration_min: Math.max(1, Math.round((fim - ini) / 60000)),
-    gmv: +o.placedSales || 0, orders: +o.placedOrders || 0,
+    gmv: +o.confirmedSales || 0, orders: +o.confirmedOrders || 0,   // só CONFIRMADOS (pedido 01/09)
+    gmv_placed: +o.placedSales || 0, orders_placed: +o.placedOrders || 0,
     views: +o.views || 0, impressions: 0, ctr: 0, gmv_hour: 0,
     avg_watch_s: Math.round((+o.avgViewsDuration || 0) / 1000),
     likes: +o.likes || 0, comments: +o.comments || 0, followers: +o.followersGrowth || 0,
