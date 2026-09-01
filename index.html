@@ -2478,7 +2478,7 @@ function render(){
   const totalLikes = data.reduce((s,r)=>s+r.lk,0);
   const totalComm = data.reduce((s,r)=>s+r.cm,0);
   const totalShare = data.reduce((s,r)=>s+r.sh,0);
-  const totalDur = data.reduce((s,r)=>s+r.du,0);
+  const totalDur = data.reduce((s,r)=>s+(r.duE!=null?r.duE:(r.du||0)),0);
   const totalClicks = data.reduce((s,r)=>s+r.pc,0);
   const lives = data.length;
   const livesComVenda = data.filter(r=>r.g>0).length;
@@ -2790,7 +2790,7 @@ function renderOvExtras(){
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
         return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews,
                  gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
-                 min: rs.reduce((a,r)=>a+(r.du||0),0) };   // du em MINUTOS → horas no ar
+                 min: rs.reduce((a,r)=>a+(r.duE!=null?r.duE:(r.du||0)),0) };   // du em MINUTOS → horas no ar
       // entra quem VENDEU ou quem simplesmente FEZ LIVE (loja que ficou no ar sem vender
       // some do gráfico e ninguém percebe — Gabriel pediu pra aparecer)
       }).filter(r=>r.gmv>0 || r.lives>0).sort((a,b)=>(b.gmv-a.gmv) || (b.lives-a.lives));
@@ -2916,7 +2916,7 @@ function renderInsights(data, allRegs){
   }
 
   // 8. Eficiência por hora
-  const totalDur = data.reduce((s,r)=>s+r.du,0);
+  const totalDur = data.reduce((s,r)=>s+(r.duE!=null?r.duE:(r.du||0)),0);
   const totalGmv = data.reduce((s,r)=>s+r.g,0);
   if(totalDur>0){
     insights.push({
@@ -2975,7 +2975,7 @@ function renderTrendDia(data){
   data.forEach(r=>{
     if(!byDia[r.d]) byDia[r.d] = {gmv:0, lives:0, du:0, titles:{}};
     const dd = byDia[r.d];
-    dd.gmv += r.g; dd.lives++; dd.du += (r.du||0);
+    dd.gmv += r.g; dd.lives++; dd.du += (r.duE!=null?r.duE:(r.du||0));
     dd.titles[r.t] = (dd.titles[r.t]||0) + r.g;
   });
   const dias = Object.keys(byDia).sort();
@@ -3180,7 +3180,7 @@ function renderEvolucao(data){
     byMes[k].lives++;
     byMes[k].gmv += r.g;
     byMes[k].items += r.it;
-    byMes[k].du += (r.du||0);
+    byMes[k].du += (r.duE!=null?r.duE:(r.du||0));
   });
   const keys = Object.keys(byMes).sort();
   const labels = keys.map(k=>{ const [y,m]=k.split('-'); return `${NOMES_MES[+m-1]}/${y.slice(2)}`; });
@@ -3292,7 +3292,7 @@ function renderPorDia(data){
     dd.views += r.v;
     dd.follows += r.nf;
     dd.cu += (r.cu||0);
-    dd.du += (r.du||0);
+    dd.du += (r.duE!=null?r.duE:(r.du||0));
     if(!dd.titles[r.t]) dd.titles[r.t] = 0;
     dd.titles[r.t] += r.g;
   });
@@ -3341,7 +3341,7 @@ function renderPorSemana(data){
     w.follows += r.nf;
     w.views += (r.v||0);
     w.cu += (r.cu||0);
-    w.du += (r.du||0);
+    w.du += (r.duE!=null?r.duE:(r.du||0));
     w.dias.add(r.d);
   });
   const keys = Object.keys(byWeek).sort();
@@ -3422,7 +3422,7 @@ function pessoasComLives(){
         if(isDona(pid)) return;
         if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0,regs:[]};
         const p=map[pid];
-        p.gmv+=(r.g||0)*share; p.lives++; p.min+=(r.du||0);
+        p.gmv+=(r.g||0)*share; p.lives++; p.min+=(r.duE!=null?r.duE:(r.du||0));
         if(vivoAgora){ p.aoVivo=true; p.aoVivoViews=Math.max(p.aoVivoViews||0, s.aoVivoViews||0); }
         p.regs.push({r:r, loja:s.name, lojaCor:s.color||'#7c5cff', share:share, vivo:vivoAgora});
       });
@@ -3488,7 +3488,7 @@ function renderLojasTab(){
     const items = filtered.reduce((sum,r)=>sum+r.it,0);
     const follows = filtered.reduce((sum,r)=>sum+r.nf,0);
     const dias = new Set(filtered.map(r=>r.d)).size;
-    const min = filtered.reduce((sum,r)=>sum+(r.du||0),0);   // du em MINUTOS
+    const min = filtered.reduce((sum,r)=>sum+(r.duE!=null?r.duE:(r.du||0)),0);   // du em MINUTOS
     return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, lives:filtered.length, gmv, items, follows, dias, min,
              gmvHora: min>0?gmv/(min/60):0, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
   }).sort((a,b)=>b.gmv-a.gmv);
@@ -3877,7 +3877,7 @@ function peopleStatsForMonth(mr){
   ensureResp();
   const map={}; (PREMIO.responsaveis||[]).forEach(p=>{ if(p.dona) return; map[p.id]={id:p.id,nome:p.nome,cor:p.cor,gmv:0,lives:0,min:0}; });
   map['__sem__']={id:'__sem__',nome:'Gravadas',cor:'#9aa0aa',gmv:0,lives:0,min:0};
-  STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid].min+=(r.du||0); }); }); });
+  STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid].min+=(r.duE!=null?r.duE:(r.du||0)); }); }); });
   const arr=Object.values(map).filter(x=>x.id!=='__sem__').sort((a,b)=>b.gmv-a.gmv);
   if(map['__sem__'].lives>0) arr.push(map['__sem__']);
   return arr;
@@ -3888,7 +3888,7 @@ function peopleStatsForFilter(){
   ensureResp();
   const map={}; (PREMIO.responsaveis||[]).forEach(p=>{ if(p.dona) return; map[p.id]={id:p.id,nome:p.nome,cor:p.cor,gmv:0,lives:0,min:0}; });
   map['__sem__']={id:'__sem__',nome:'Gravadas',cor:'#9aa0aa',gmv:0,lives:0,min:0};
-  STORES.forEach(s=>{ filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid].min+=(r.du||0); }); }); });
+  STORES.forEach(s=>{ filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid].min+=(r.duE!=null?r.duE:(r.du||0)); }); }); });
   const arr=Object.values(map).filter(x=>x.id!=='__sem__').sort((a,b)=>b.gmv-a.gmv);
   if(map['__sem__'].lives>0) arr.push(map['__sem__']);
   return arr;
@@ -6406,6 +6406,26 @@ try{ setFilter({type:'today'}); }catch(e){}
         }
         soma(g.tt, 'tt');
         soma(g.shp, 'shp');
+        // horas honestas: live simultânea nas 2 plataformas conta o tempo UMA vez.
+        // duE = quanto ESTA live acrescenta ao tempo no ar da loja (sobreposição
+        // fica com a live que começou antes); o du real da live segue intacto.
+        (function(){
+          var ivs = [];
+          for(var ri=0; ri<regs.length; ri++){
+            var r = regs[ri];
+            var ini = +new Date(String(r.dt||'').replace(' ','T')+':00');
+            if(!isFinite(ini) || !(+r.du>0)){ r.duE = (+r.du||0); continue; }
+            ivs.push({ r:r, ini:ini, fim: ini + r.du*60000 });
+          }
+          ivs.sort(function(a,b){ return a.ini-b.ini; });
+          var cob = -Infinity;
+          for(var vi=0; vi<ivs.length; vi++){
+            var x = ivs[vi];
+            x.r.duE = Math.max(0, Math.round((x.fim - Math.max(x.ini, cob))/60000));
+            if(x.r.duE > x.r.du) x.r.duE = x.r.du;
+            if(x.fim > cob) cob = x.fim;
+          }
+        })();
         return {
           id: 'cloud_' + ((g.tt?'tts_lives:':'shp_lives:')+nome).replace(/[^a-z0-9]/gi,''),
           cloudLoja: nome,
