@@ -1029,6 +1029,8 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 @keyframes lvblink{0%,100%{opacity:1}50%{opacity:.2}}
 .mkb{display:inline-flex;align-items:center;margin-left:7px;vertical-align:middle;flex:none}
 .mkb img{width:15px;height:15px;border-radius:4px;display:block}
+.mkb{gap:3px}
+.lvtag img{width:11px;height:11px;border-radius:3px;margin-right:1px;display:inline-block;vertical-align:-2px}
 .mkb.fb{font-size:8.5px;font-weight:800;letter-spacing:.06em;border-radius:6px;padding:2px 6px;background:rgba(238,77,45,.14);color:#ff8a5c;border:1px solid rgba(238,77,45,.40)}
 .ss-mkt{display:flex;gap:6px;padding:8px 12px 4px}
 .ss-mkt button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;border-radius:9px;border:1px solid var(--line,#2a3054);background:transparent;color:var(--text-3,#9aa0aa);cursor:pointer}
@@ -1751,15 +1753,32 @@ var LD_MKT = (function(){ try{ return localStorage.getItem('ld-mkt')||'all'; }ca
 function temMix(){ return ((window.STORES_ALL||STORES)||[]).some(function(x){ return x && x.mkt==='shp'; }); }
 function filtraMkt(arr){
   var m = LD_MKT||'all';
-  return m==='all' ? arr.slice() : arr.filter(function(x){ return (x.mkt||'tt')===m; });
+  if(m==='all') return arr.slice();
+  var out = [];
+  for(var i=0;i<arr.length;i++){
+    var x = arr[i];
+    var tem = x.mkts ? !!x.mkts[m] : ((x.mkt||'tt')===m);
+    if(!tem) continue;
+    var c = Object.assign({}, x);
+    c.regs = (x.regs||[]).filter(function(r){ return (r.mk||'tt')===m; });
+    c.mkts = {}; c.mkts[m] = true;
+    c.ultimoFim = (m==='shp') ? (x.ultimoFimSHP||0) : (x.ultimoFimTT||x.ultimoFim||0);
+    c.aoVivoRooms = (x.aoVivoRooms||[]).filter(function(id){
+      return c.regs.some(function(r){ return String(r.id)===String(id); });
+    });
+    c.aoVivoRoom = c.aoVivoRooms[0]||null;
+    out.push(c);
+  }
+  return out;
 }
 function mktBadge(x){
-  if(!x || !x.mkt || !temMix()) return '';
-  var shp = x.mkt==='shp';
-  return '<span class="mkb" title="Loja d'+(shp?'a Shopee':'o TikTok')+'">'
-    + '<img src="https://www.google.com/s2/favicons?domain='+(shp?'shopee.com.br':'tiktok.com')+'&sz=64" alt="'+(shp?'Shopee':'TikTok')+'"'
-    + ' onerror="this.parentNode.className=\'mkb fb\';this.parentNode.textContent=\''+(shp?'SHP':'TK')+'\'">'
-    + '</span>';
+  if(!x || !temMix()) return '';
+  var ks = x.mkts ? ['tt','shp'].filter(function(k){ return !!x.mkts[k]; }) : (x.mkt ? [x.mkt] : []);
+  if(!ks.length) return '';
+  return '<span class="mkb">'+ks.map(function(k){
+    var shp = k==='shp';
+    return '<img src="https://www.google.com/s2/favicons?domain='+(shp?'shopee.com.br':'tiktok.com')+'&sz=64" alt="'+(shp?'Shopee':'TikTok')+'" title="'+(shp?'Shopee':'TikTok')+'">';
+  }).join('')+'</span>';
 }
 function pintaMkt(){
   var bar = document.getElementById('ssMkt');
@@ -1791,17 +1810,27 @@ function setMkt(m){
 function lvTagHtml(s){
   // sem contagem de espectadores: o TikTok só dá o ACUMULADO, não o simultâneo — Gabriel mandou esquecer
   if(!lojaAoVivo(s))return '';
-  return '<span class="lvtag" title="Conta transmitindo agora (dado do robô, até ~6 min)"><span class="lvdot"></span><span class="lvtxt">AO VIVO</span></span>';
+  var ic = '';
+  if(temMix()){
+    var doze = 12*60*1000, ds = [];
+    if((s.ultimoFimTT||0) && Date.now()-s.ultimoFimTT < doze) ds.push('tiktok.com');
+    if((s.ultimoFimSHP||0) && Date.now()-s.ultimoFimSHP < doze) ds.push('shopee.com.br');
+    ic = ds.map(function(d){ return '<img src="https://www.google.com/s2/favicons?domain='+d+'&sz=64" alt="">'; }).join('');
+  }
+  return '<span class="lvtag" title="Conta transmitindo agora (dado do robô, até ~6 min)"><span class="lvdot"></span>'+ic+'<span class="lvtxt">AO VIVO</span></span>';
 }
 function pessoasAoVivoIds(){
   var out = new Set();
   try{
     (STORES||[]).forEach(function(st){
-      if(!lojaAoVivo(st) || st.aoVivoRoom==null) return;
-      var reg = (st.regs||[]).find(function(x){ return String(x.id)===String(st.aoVivoRoom); });
-      if(!reg) return;
-      var pids = (typeof resolveRespMulti==='function') ? resolveRespMulti(reg, st.id) : [];
-      (pids && pids.length ? pids : ['__sem__']).forEach(function(p){ out.add(p); });
+      if(!lojaAoVivo(st)) return;
+      var rooms = (st.aoVivoRooms && st.aoVivoRooms.length) ? st.aoVivoRooms : (st.aoVivoRoom!=null ? [st.aoVivoRoom] : []);
+      rooms.forEach(function(rid){
+        var reg = (st.regs||[]).find(function(x){ return String(x.id)===String(rid); });
+        if(!reg) return;
+        var pids = (typeof resolveRespMulti==='function') ? resolveRespMulti(reg, st.id) : [];
+        (pids && pids.length ? pids : ['__sem__']).forEach(function(p){ out.add(p); });
+      });
     });
   }catch(e){}
   return out;
@@ -2759,7 +2788,7 @@ function renderOvExtras(){
     try{
       const rows = STORES.map(s=>{
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
-        return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, ultimoFim:s.ultimoFim, aoVivoViews:s.aoVivoViews,
+        return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews,
                  gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
                  min: rs.reduce((a,r)=>a+(r.du||0),0) };   // du em MINUTOS → horas no ar
       // entra quem VENDEU ou quem simplesmente FEZ LIVE (loja que ficou no ar sem vender
@@ -3388,7 +3417,7 @@ function pessoasComLives(){
   STORES.forEach(s=>{
     filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{
       const pids=resolveRespMulti(r,s.id), share=1/pids.length;
-      const vivoAgora = (typeof lojaAoVivo==='function') && lojaAoVivo(s) && r.id!=null && String(r.id)===String(s.aoVivoRoom);
+      const vivoAgora = (typeof lojaAoVivo==='function') && lojaAoVivo(s) && r.id!=null && ((s.aoVivoRooms&&s.aoVivoRooms.length)?s.aoVivoRooms:[s.aoVivoRoom]).some(function(v){ return v!=null && String(r.id)===String(v); });
       pids.forEach(pid=>{
         if(isDona(pid)) return;
         if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0,regs:[]};
@@ -3460,7 +3489,7 @@ function renderLojasTab(){
     const follows = filtered.reduce((sum,r)=>sum+r.nf,0);
     const dias = new Set(filtered.map(r=>r.d)).size;
     const min = filtered.reduce((sum,r)=>sum+(r.du||0),0);   // du em MINUTOS
-    return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, ultimoFim:s.ultimoFim, aoVivoViews:s.aoVivoViews, lives:filtered.length, gmv, items, follows, dias, min,
+    return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, lives:filtered.length, gmv, items, follows, dias, min,
              gmvHora: min>0?gmv/(min/60):0, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
   }).sort((a,b)=>b.gmv-a.gmv);
   const totalGmv = stats.reduce((s,x)=>s+x.gmv,0);
@@ -6304,7 +6333,7 @@ try{ setFilter({type:'today'}); }catch(e){}
       gh: +l.gmv_hour || 0,
       ctr: ctrFrac*100, fr: 0,
       pc: Math.round(ctrFrac*ip), pi: ip,
-      nf: 0, lk: +l.likes||0, cm: +l.comments||0, sh: 0,
+      nf: +l.followers||0, lk: +l.likes||0, cm: +l.comments||0, sh: 0,
       avd: +l.avg_watch_s || 0
     };
   }
@@ -6352,28 +6381,46 @@ try{ setFilter({type:'today'}); }catch(e){}
       var rows = await lerRows();
       if(!rows || !rows.length) return false;
       var meta = await lerMeta();
-      var lojas = rows.map(function(row, i){
-        var lives = (row.data && row.data.lives) || [];
+      // agrupa por LOJA: TikTok e Shopee da mesma loja viram UMA loja só (pedido 01/09)
+      var porLoja = {}, ordem = [];
+      rows.forEach(function(row){
         var ehShp = row.key.indexOf('shp_lives:')===0;
-        var loja = row.key.replace(/^(tts|shp)_lives:/,'');
-        var metaKey = ehShp ? ('shp:'+loja) : loja;   // logo/cor separados por plataforma
-        var m = meta[metaKey] || {};
-        var ultimoFim = 0, vivoViews = 0, vivoRoom = null;
-        for(var li=0; li<lives.length; li++){
-          var ft = +new Date(lives[li].finished_at || 0);
-          if(ft > ultimoFim){ ultimoFim = ft; vivoViews = +lives[li].views || 0; vivoRoom = lives[li].room_id; }
+        var nome = row.key.replace(/^(tts|shp)_lives:/,'');
+        if(!porLoja[nome]){ porLoja[nome] = { tt:null, shp:null }; ordem.push(nome); }
+        porLoja[nome][ehShp?'shp':'tt'] = (row.data && row.data.lives) || [];
+      });
+      var lojas = ordem.map(function(nome, i){
+        var g = porLoja[nome];
+        var m = meta[nome] || {};
+        var regs = [], mkts = {}, fimTT = 0, fimSHP = 0, vivos = [], vivoViews = 0;
+        function soma(lista, mk){
+          if(!lista) return;
+          mkts[mk] = true;
+          for(var li=0; li<lista.length; li++){
+            var ft = +new Date(lista[li].finished_at || 0);
+            if(mk==='tt' && ft>fimTT) fimTT = ft;
+            if(mk==='shp' && ft>fimSHP) fimSHP = ft;
+            if(ft && Date.now()-ft < 12*60*1000){ vivos.push(lista[li].room_id); vivoViews = +lista[li].views || vivoViews; }
+            var r = regFromLive(lista[li]); r.mk = mk; regs.push(r);
+          }
         }
+        soma(g.tt, 'tt');
+        soma(g.shp, 'shp');
         return {
-          id: 'cloud_'+row.key.replace(/[^a-z0-9]/gi,''),
-          cloudLoja: metaKey,
-          mkt: ehShp ? 'shp' : 'tt',
-          name: m.name || loja.toUpperCase(),
+          id: 'cloud_' + ((g.tt?'tts_lives:':'shp_lives:')+nome).replace(/[^a-z0-9]/gi,''),
+          cloudLoja: nome,
+          mkts: mkts,
+          mkt: (g.shp && !g.tt) ? 'shp' : 'tt',
+          name: m.name || nome.toUpperCase(),
           color: m.color || PAL[i % PAL.length],
           logo: m.logo || undefined,
-          ultimoFim: ultimoFim,
+          ultimoFim: Math.max(fimTT, fimSHP),
+          ultimoFimTT: fimTT,
+          ultimoFimSHP: fimSHP,
           aoVivoViews: vivoViews,
-          aoVivoRoom: vivoRoom,
-          regs: lives.map(regFromLive)
+          aoVivoRoom: vivos[0] || null,
+          aoVivoRooms: vivos,
+          regs: regs
         };
       });
       lojas.sort(function(a,b){ return b.regs.length - a.regs.length; });  // mais lives primeiro
