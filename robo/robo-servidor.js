@@ -117,10 +117,11 @@ function shpParseLive(o, loja) {
     duration_min: Math.max(1, Math.round((fim - ini) / 60000)),
     gmv: +o.confirmedSales || 0, orders: +o.confirmedOrders || 0,   // só CONFIRMADOS (pedido 01/09)
     gmv_placed: +o.placedSales || 0, orders_placed: +o.placedOrders || 0,
+    items: +o.confirmedItemSold || 0, items_placed: +o.placedItemSold || 0,
     views: +o.views || 0, impressions: 0, ctr: 0, gmv_hour: 0,
     avg_watch_s: Math.round((+o.avgViewsDuration || 0) / 1000),
     likes: +o.likes || 0, comments: +o.comments || 0, followers: +o.followersGrowth || 0,
-    viewers: +o.viewers || 0, peak: +o.peakViewers || 0,
+    viewers: +o.viewers || 0, peak: +o.peakViewers || +o.peakViews || 0,
   };
 }
 
@@ -165,37 +166,68 @@ async function coletarLojaShopee(loja, storageState) {
   await page.goto(SHOPEE_PAGS[0], { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
   await page.waitForTimeout(5000);
 
-  // caminho principal: o endpoint da lista aceita page/pageSize direto (descoberta 01/09)
-  const SHP_LISTA = 'https://creator.shopee.com.br/supply/api/lm/sellercenter/realtime/sessionList';
-  const todas = [];
-  let total = null;
-  for (let p = 1; p <= 40; p++) {
+  // (02/09) O realtime/sessionList só devolve ~3 dias — era o buraco de 28-30/08.
+  // O HISTÓRICO vem do liveList/v2 em janelas de 30 dias (timeDim=30d&endDate=…),
+  // recuando até esvaziar. O realtime continua: pega a live EM ANDAMENTO e traz
+  // views/likes que o v2 manda nulos. Merge por sessionId, v2 ganha no dinheiro.
+  const SHP_RT = 'https://creator.shopee.com.br/supply/api/lm/sellercenter/realtime/sessionList';
+  const SHP_V2 = 'https://creator.shopee.com.br/supply/api/lm/sellercenter/liveList/v2';
+  const porId = new Map();
+
+  // 1) realtime (recentes)
+  for (let p = 1; p <= 10; p++) {
     let j = null;
     try {
-      const r = await page.request.get(SHP_LISTA + '?page=' + p + '&pageSize=50&name=&orderBy=&sort=');
+      const r = await page.request.get(SHP_RT + '?page=' + p + '&pageSize=50&name=&orderBy=&sort=');
       j = await r.json();
     } catch (e) { break; }
-    if (!j || j.code !== 0 || !j.data || !Array.isArray(j.data.list)) break;
-    total = j.data.total;
-    j.data.list.forEach((o) => { const l = shpParseLive(o, loja); if (l) todas.push(l); });
-    if (!j.data.list.length || (total != null && todas.length >= total)) break;
+    if (!j || j.code !== 0 || !j.data || !Array.isArray(j.data.list) || !j.data.list.length) break;
+    j.data.list.forEach((o) => { const l = shpParseLive(o, loja); if (l) porId.set(l.room_id, l); });
+    if (porId.size >= (+j.data.total || 0)) break;
   }
 
-  // fallback: garimpa o que a própria página buscou (se o direto mudar/quebrar)
-  if (!todas.length) {
+  // 2) histórico em janelas de 30 dias (até ~meio ano)
+  for (let w = 0; w < 6; w++) {
+    const endDate = new Date(Date.now() - w * 30 * 86400000).toISOString().slice(0, 10);
+    let daJanela = 0;
+    for (let p = 1; p <= 40; p++) {
+      let j = null;
+      try {
+        const r = await page.request.get(SHP_V2 + '?page=' + p + '&pageSize=50&name=&orderBy=&sort=&timeDim=30d&endDate=' + endDate);
+        j = await r.json();
+      } catch (e) { break; }
+      if (!j || j.code !== 0 || !j.data || !Array.isArray(j.data.list) || !j.data.list.length) break;
+      j.data.list.forEach((o) => {
+        const l = shpParseLive(o, loja);
+        if (!l) return;
+        daJanela++;
+        const antes = porId.get(l.room_id);
+        if (antes) {
+          const m = Object.assign({}, antes, l); // v2 ganha (dinheiro mais fresco)
+          ['views', 'likes', 'followers', 'comments'].forEach((k) => { if (!m[k] && antes[k]) m[k] = antes[k]; });
+          porId.set(l.room_id, m);
+        } else porId.set(l.room_id, l);
+      });
+      if (daJanela >= (+j.data.total || 0)) break;
+    }
+    if (!daJanela && w > 0) break; // janela antiga vazia = fim do histórico da conta
+  }
+
+  // fallback: garimpa o que a própria página buscou (se os diretos mudarem/quebrarem)
+  if (!porId.size) {
     await page.waitForTimeout(8000);
     await page.mouse.wheel(0, 1800).catch(() => {});
     await page.waitForTimeout(3000);
-    capturas.forEach((c) => shpGarimpa(c.corpo, todas, loja));
+    const achadas = [];
+    capturas.forEach((c) => shpGarimpa(c.corpo, achadas, loja));
+    achadas.forEach((l) => porId.set(l.room_id, l));
   }
 
-  const mapa = new Map();
-  todas.forEach((l) => mapa.set(l.room_id, l));
-  const lives = Array.from(mapa.values());
+  const lives = Array.from(porId.values());
   if (!lives.length && !capturas.length) throw new Error('sessão Shopee não respondeu (cookie pode ter expirado — reconecte a loja)');
 
   // amostra crua (sessionList primeiro) pra recalibrar o leitor se a Shopee mudar
-  const ord = capturas.slice().sort((a, b) => (b.url.includes('sessionList') ? 1 : 0) - (a.url.includes('sessionList') ? 1 : 0));
+  const ord = capturas.slice().sort((a, b) => (/sessionList|liveList/.test(b.url) ? 1 : 0) - (/sessionList|liveList/.test(a.url) ? 1 : 0));
   const amostra = ord.slice(0, 4).map((c) => ({ url: c.url, corpo_txt: JSON.stringify(c.corpo).slice(0, 12000) }));
   return { lives, amostra, capturas: capturas.length };
   } finally {
