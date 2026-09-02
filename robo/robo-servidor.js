@@ -203,8 +203,17 @@ async function coletarLojaShopee(loja, storageState) {
         daJanela++;
         const antes = porId.get(l.room_id);
         if (antes) {
-          const m = Object.assign({}, antes, l); // v2 ganha (dinheiro mais fresco)
-          ['views', 'likes', 'followers', 'comments'].forEach((k) => { if (!m[k] && antes[k]) m[k] = antes[k]; });
+          // O insight (v2) PROCESSA COM ATRASO: live de hoje vem zerada nele.
+          // v2 só ganha quando traz dinheiro; senão o realtime (antes) prevalece
+          // — foi o bug de 02/09 que ZEROU o dia corrente no painel.
+          const v2TemDinheiro = (l.gmv_placed > 0 || l.orders_placed > 0 || l.gmv > 0);
+          const antesTemDinheiro = (antes.gmv_placed > 0 || antes.gmv > 0 || antes.orders > 0);
+          const m = (!v2TemDinheiro && antesTemDinheiro)
+            ? Object.assign({}, l, antes)   // realtime ganha
+            : Object.assign({}, antes, l);  // v2 ganha (live processada)
+          ['views', 'likes', 'followers', 'comments', 'viewers', 'peak', 'avg_watch_s'].forEach((k) => {
+            if (!m[k] && (antes[k] || l[k])) m[k] = antes[k] || l[k];
+          });
           porId.set(l.room_id, m);
         } else porId.set(l.room_id, l);
       });
