@@ -1770,7 +1770,10 @@ var LD_MKT = (function(){ try{ return localStorage.getItem('ld-mkt')||'all'; }ca
 function temMix(){ return ((window.STORES_ALL||STORES)||[]).some(function(x){ return x && (x.mkt==='shp' || (x.mkts && x.mkts.shp)); }); }
 function filtraMkt(arr){
   var m = LD_MKT||'all';
-  if(m==='all') return arr.slice();
+  if(m==='all'){
+    for(var i0=0;i0<arr.length;i0++){ if(arr[i0] && arr[i0].regs) calcDuE(arr[i0].regs); }
+    return arr.slice();
+  }
   var out = [];
   for(var i=0;i<arr.length;i++){
     var x = arr[i];
@@ -1784,9 +1787,30 @@ function filtraMkt(arr){
       return c.regs.some(function(r){ return String(r.id)===String(id); });
     });
     c.aoVivoRoom = c.aoVivoRooms[0]||null;
+    calcDuE(c.regs); // horas da plataforma filtrada valem cheias
     out.push(c);
   }
   return out;
+}
+function calcDuE(regs){
+  // duE = quanto ESTA live acrescenta ao tempo no ar (sobreposição fica com a
+  // que começou antes). Re-roda a cada troca de filtro de marketplace: no
+  // filtro Shopee, a live Shopee vale cheia (a dedupe tt×shp só vale no Todas).
+  var ivs = [];
+  for(var ri=0; ri<(regs||[]).length; ri++){
+    var r = regs[ri];
+    var ini = +new Date(String(r.dt||'').replace(' ','T')+':00');
+    if(!isFinite(ini) || !(+r.du>0)){ r.duE = (+r.du||0); continue; }
+    ivs.push({ r:r, ini:ini, fim: ini + r.du*60000 });
+  }
+  ivs.sort(function(a,b){ return a.ini-b.ini; });
+  var cob = -Infinity;
+  for(var vi=0; vi<ivs.length; vi++){
+    var x = ivs[vi];
+    x.r.duE = Math.max(0, Math.round((x.fim - Math.max(x.ini, cob))/60000));
+    if(x.r.duE > x.r.du) x.r.duE = x.r.du;
+    if(x.fim > cob) cob = x.fim;
+  }
 }
 function minutosUniao(regs){
   // tempo de PAREDE: intervalos sobrepostos (replays rodando juntos) contam UMA vez
@@ -6496,26 +6520,8 @@ try{ setFilter({type:'today'}); }catch(e){}
         }
         soma(g.tt, 'tt');
         soma(g.shp, 'shp');
-        // horas honestas: live simultânea nas 2 plataformas conta o tempo UMA vez.
-        // duE = quanto ESTA live acrescenta ao tempo no ar da loja (sobreposição
-        // fica com a live que começou antes); o du real da live segue intacto.
-        (function(){
-          var ivs = [];
-          for(var ri=0; ri<regs.length; ri++){
-            var r = regs[ri];
-            var ini = +new Date(String(r.dt||'').replace(' ','T')+':00');
-            if(!isFinite(ini) || !(+r.du>0)){ r.duE = (+r.du||0); continue; }
-            ivs.push({ r:r, ini:ini, fim: ini + r.du*60000 });
-          }
-          ivs.sort(function(a,b){ return a.ini-b.ini; });
-          var cob = -Infinity;
-          for(var vi=0; vi<ivs.length; vi++){
-            var x = ivs[vi];
-            x.r.duE = Math.max(0, Math.round((x.fim - Math.max(x.ini, cob))/60000));
-            if(x.r.duE > x.r.du) x.r.duE = x.r.du;
-            if(x.fim > cob) cob = x.fim;
-          }
-        })();
+        // horas honestas: live simultânea nas 2 plataformas conta o tempo UMA vez
+        if(typeof calcDuE==='function') calcDuE(regs);
         return {
           id: 'cloud_' + ((g.tt?'tts_lives:':'shp_lives:')+nome).replace(/[^a-z0-9]/gi,''),
           cloudLoja: nome,
