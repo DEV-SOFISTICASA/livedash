@@ -1030,7 +1030,10 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .mkb{display:inline-flex;align-items:center;margin-left:7px;vertical-align:middle;flex:none}
 .mkb img{width:15px;height:15px;border-radius:4px;display:block}
 .mkb{gap:3px}
-.ovs-mki{width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:2px;display:inline-block}
+.ovs-mki{width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:3px;display:inline-block}
+.ov-spct em.ovs-mix{display:block;white-space:nowrap;line-height:1.5}
+.pmix{margin-top:2px}
+.pmix span{display:block;text-align:right;font-size:10.5px;color:var(--text-3);line-height:1.5;white-space:nowrap;font-variant-numeric:tabular-nums}
 .lvtag img{width:11px;height:11px;border-radius:3px;margin-right:1px;display:inline-block;vertical-align:-2px}
 .mkb.fb{font-size:8.5px;font-weight:800;letter-spacing:.06em;border-radius:6px;padding:2px 6px;background:rgba(238,77,45,.14);color:#ff8a5c;border:1px solid rgba(238,77,45,.40)}
 .ss-mkt{display:flex;gap:6px;padding:8px 12px 4px}
@@ -2836,7 +2839,11 @@ function renderOvExtras(){
           + '<div class="ov-phead">'
           +   '<div class="ov-pavatar" style="background:'+(p.cor?('linear-gradient(135deg,'+p.cor+',var(--accent))'):'var(--grad)')+'">'+ini+'</div>'
           +   '<div><div class="ov-pname">'+p.nome+(pessoasAoVivoIds().has(p.id)?lvTagHtml({ultimoFim:Date.now()}):'')+'</div><div class="ov-psub">'+p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar</div></div>'
-          +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div><div class="p">'+(inf.premio>0?('premiação do mês <strong>'+brl(inf.premio)+'</strong>'):'sem faixa no mês')+'</div></div>'
+          +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div>'
+          +   ((typeof temMix==='function' && temMix() && ((p.gTT||0)>0||(p.gSHP||0)>0))
+              ? '<div class="pmix">'+((p.gTT||0)>0?'<span><img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=tiktok.com&sz=64" alt="TikTok">'+brl(p.gTT)+'</span>':'')+((p.gSHP||0)>0?'<span><img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=shopee.com.br&sz=64" alt="Shopee">'+brl(p.gSHP)+'</span>':'')+'</div>'
+              : '')
+          +   '<div class="p">'+(inf.premio>0?('premiação do mês <strong>'+brl(inf.premio)+'</strong>'):'sem faixa no mês')+'</div></div>'
           + '</div>'
           + '<div class="ov-track"><div class="ov-fill" style="width:'+pct.toFixed(1)+'%"></div></div>'
           + '<div class="ov-pfoot"><span>'+(inf.aplicada?('faixa '+inf.faixaLabel):'abaixo da 1ª faixa')+' · '+NOMES_MES[mrNow.month]+'</span><span>'+(inf.next?('próxima: '+brlk(inf.next.alvo)):'faixa máxima')+'</span></div>'
@@ -2901,7 +2908,9 @@ function renderOvExtras(){
         return '<div class="ov-srow'+(r.gmv>0?'':' semvenda')+'" title="'+tit+'">'
           + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em></span></div>'
           + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
-          + '<div class="ov-spct"><b>'+(r.gmv>0?brlk(r.gmv):'—')+'</b><em>'+(racha ? (IC_TT+brlk(r.gmvTT)+' · '+IC_SH+brlk(r.gmvSHP)) : (r.gmv>0?pct.toFixed(0)+'%':'sem venda'))+'</em></div>'
+          + '<div class="ov-spct"><b>'+(r.gmv>0?brlk(r.gmv):'—')+'</b>'+(racha
+              ? '<em class="ovs-mix">'+IC_TT+brlk(r.gmvTT)+'</em><em class="ovs-mix">'+IC_SH+brlk(r.gmvSHP)+'</em>'
+              : '<em>'+(r.gmv>0?pct.toFixed(0)+'%':'sem venda')+'</em>')+'</div>'
           + '</div>';
       }).join('') || '<div style="text-align:center;color:var(--text-4);padding:18px 8px;font-size:13px">Sem lives no período</div>';
       // donut (pizza)
@@ -3989,7 +3998,7 @@ function peopleStatsForMonth(mr){
   const map={}; (PREMIO.responsaveis||[]).forEach(p=>{ if(p.dona) return; map[p.id]={id:p.id,nome:p.nome,cor:p.cor,gmv:0,lives:0,min:0}; });
   map['__sem__']={id:'__sem__',nome:'Gravadas',cor:'#9aa0aa',gmv:0,lives:0,min:0};
   map['__semshp__']={id:'__semshp__',nome:'⚠ Sem sigla (Shopee)',cor:'#f59e0b',gmv:0,lives:0,min:0};
-  STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; (map[pid]._iv||(map[pid]._iv=[])).push(r); }); }); });
+  STORES.forEach(s=>{ filterRegsByMonth(s.regs,mr).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid][(r.mk==='shp')?'gSHP':'gTT']=(map[pid][(r.mk==='shp')?'gSHP':'gTT']||0)+(r.g||0)*share; (map[pid]._iv||(map[pid]._iv=[])).push(r); }); }); });
   // horas por PESSOA = união das lives DELA (tt+shp simultâneas contam 1x; ninguém
   // perde minuto pra live de OUTRA pessoa — o duE por loja roubava, caso 03/09)
   Object.keys(map).forEach(function(bk){ if(map[bk]._iv) map[bk].min = minutosUniao(map[bk]._iv); });
@@ -4005,7 +4014,7 @@ function peopleStatsForFilter(){
   const map={}; (PREMIO.responsaveis||[]).forEach(p=>{ if(p.dona) return; map[p.id]={id:p.id,nome:p.nome,cor:p.cor,gmv:0,lives:0,min:0}; });
   map['__sem__']={id:'__sem__',nome:'Gravadas',cor:'#9aa0aa',gmv:0,lives:0,min:0};
   map['__semshp__']={id:'__semshp__',nome:'⚠ Sem sigla (Shopee)',cor:'#f59e0b',gmv:0,lives:0,min:0};
-  STORES.forEach(s=>{ filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; (map[pid]._iv||(map[pid]._iv=[])).push(r); }); }); });
+  STORES.forEach(s=>{ filterRegs(s.regs||[], CURRENT_FILTER).forEach(r=>{ const pids=resolveRespMulti(r,s.id); const share=1/pids.length; pids.forEach(pid=>{ if(isDona(pid)) return; if(!map[pid]) map[pid]={id:pid,nome:pid,cor:'#9aa0aa',gmv:0,lives:0,min:0}; map[pid].gmv+=(r.g||0)*share; map[pid].lives++; map[pid][(r.mk==='shp')?'gSHP':'gTT']=(map[pid][(r.mk==='shp')?'gSHP':'gTT']||0)+(r.g||0)*share; (map[pid]._iv||(map[pid]._iv=[])).push(r); }); }); });
   // horas por PESSOA = união das lives DELA (tt+shp simultâneas contam 1x; ninguém
   // perde minuto pra live de OUTRA pessoa — o duE por loja roubava, caso 03/09)
   Object.keys(map).forEach(function(bk){ if(map[bk]._iv) map[bk].min = minutosUniao(map[bk]._iv); });
