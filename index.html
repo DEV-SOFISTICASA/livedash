@@ -1030,6 +1030,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .mkb{display:inline-flex;align-items:center;margin-left:7px;vertical-align:middle;flex:none}
 .mkb img{width:15px;height:15px;border-radius:4px;display:block}
 .mkb{gap:3px}
+.ovs-mki{width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:2px;display:inline-block}
 .lvtag img{width:11px;height:11px;border-radius:3px;margin-right:1px;display:inline-block;vertical-align:-2px}
 .mkb.fb{font-size:8.5px;font-weight:800;letter-spacing:.06em;border-radius:6px;padding:2px 6px;background:rgba(238,77,45,.14);color:#ff8a5c;border:1px solid rgba(238,77,45,.40)}
 .ss-mkt{display:flex;gap:6px;padding:8px 12px 4px}
@@ -2882,6 +2883,8 @@ function renderOvExtras(){
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
         return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews,
                  gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
+                 gmvTT: rs.reduce((a,r)=>a+(((r.mk||'tt')==='tt')?r.g:0),0),
+                 gmvSHP: rs.reduce((a,r)=>a+((r.mk==='shp')?r.g:0),0),
                  min: rs.reduce((a,r)=>a+(r.duE!=null?r.duE:(r.du||0)),0) };   // du em MINUTOS → horas no ar
       // entra quem VENDEU ou quem simplesmente FEZ LIVE (loja que ficou no ar sem vender
       // some do gráfico e ninguém percebe — Gabriel pediu pra aparecer)
@@ -2891,10 +2894,14 @@ function renderOvExtras(){
       elS.innerHTML = rows.map(r=>{
         const pct = tot>0 ? r.gmv/tot*100 : 0;
         const ic = r.logo ? '<span class="ovs-logo" style="background-image:url('+r.logo+')"></span>' : '<span class="ovs-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
-        return '<div class="ov-srow'+(r.gmv>0?'':' semvenda')+'" title="'+brl(r.gmv)+'">'
+        const IC_TT='<img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=tiktok.com&sz=64" alt="TikTok">';
+        const IC_SH='<img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=shopee.com.br&sz=64" alt="Shopee">';
+        const racha = (typeof temMix==='function' && temMix() && r.gmvTT>0 && r.gmvSHP>0);
+        const tit = brl(r.gmv) + (racha ? (' — TikTok '+brl(r.gmvTT)+' · Shopee '+brl(r.gmvSHP)) : '');
+        return '<div class="ov-srow'+(r.gmv>0?'':' semvenda')+'" title="'+tit+'">'
           + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em></span></div>'
           + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
-          + '<div class="ov-spct"><b>'+(r.gmv>0?brlk(r.gmv):'—')+'</b><em>'+(r.gmv>0?pct.toFixed(0)+'%':'sem venda')+'</em></div>'
+          + '<div class="ov-spct"><b>'+(r.gmv>0?brlk(r.gmv):'—')+'</b><em>'+(racha ? (IC_TT+brlk(r.gmvTT)+' · '+IC_SH+brlk(r.gmvSHP)) : (r.gmv>0?pct.toFixed(0)+'%':'sem venda'))+'</em></div>'
           + '</div>';
       }).join('') || '<div style="text-align:center;color:var(--text-4);padding:18px 8px;font-size:13px">Sem lives no período</div>';
       // donut (pizza)
