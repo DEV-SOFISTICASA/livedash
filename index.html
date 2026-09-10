@@ -476,8 +476,16 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 #ovShare .ovs-nm{min-width:0;display:flex;flex-direction:column;line-height:1.25}
 #ovShare .ovs-n1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;color:var(--text)}
 #ovShare .ovs-lv{font-style:normal;font-size:9.5px;color:var(--text-4);font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-#ovShare .ovs-lv.ovs-lvmk{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-2);text-transform:none;letter-spacing:0;line-height:1.5;font-family:'JetBrains Mono',monospace;font-weight:600}
-#ovShare .ovs-lvmk .ovs-mki{width:11px;height:11px;margin-right:1px}
+#ovShare .ov-srow.ov-smulti{display:block;padding:9px 0}
+#ovShare .ovm-head{display:flex;align-items:center;gap:8px;min-width:0}
+#ovShare .ovm-head .ovs-n1{flex:1;min-width:0}
+#ovShare .ovm-tot{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap}
+#ovShare .ov-smulti .ov-track{margin:7px 0 5px}
+#ovShare .ovm-mk{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text-2);line-height:1.9;min-width:0}
+#ovShare .ovm-mk .ovs-mki{width:12px;height:12px;flex-shrink:0}
+#ovShare .ovm-info{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ovShare .ovm-val{margin-left:auto;white-space:nowrap;color:var(--text-2)}
+#ovShare .ov-srow.ov-smulti.semvenda .ovm-val{color:var(--warn,#e0a340)}
 @media(max-width:640px){#ovShare .ovs-lv{letter-spacing:0;font-size:9px}}
 #ovShare .ov-srow.semvenda{opacity:.66}
 #ovShare .ov-srow.semvenda .ov-spct em{color:var(--warn,#e0a340);font-weight:700;text-transform:none;letter-spacing:0}
@@ -2914,13 +2922,18 @@ function renderOvExtras(){
         const tit = brl(r.gmv)
           + (racha ? (' — TikTok '+brl(r.gmvTT)+' · Shopee '+brl(r.gmvSHP)) : '')
           + (doisMkts ? (' — no ar: TikTok '+fmtMinH(r.minTT)+' · Shopee '+fmtMinH(r.minSHP)+' · juntas '+fmtMinH(r.min)+' (simultânea conta 1x)') : '');
-        // horas por marketplace: loja nas 2 plataformas ganha uma linha POR mkt (logo + lives + horas)
-        const sub = doisMkts
-          ? '<em class="ovs-lv ovs-lvmk">'+IC_TT+r.livesTT+' live'+(r.livesTT===1?'':'s')+' · '+fmtMinH(r.minTT)+'</em>'
-            + '<em class="ovs-lv ovs-lvmk">'+IC_SH+r.livesSHP+' live'+(r.livesSHP===1?'':'s')+' · '+fmtMinH(r.minSHP)+'</em>'
-          : '<em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em>';
+        if(doisMkts){
+          // loja nas 2 plataformas: BLOCO com sub-linha inteira por marketplace (nada cortado)
+          const linhaMk=(icn,lv,mn,g)=>'<div class="ovm-mk">'+icn+'<span class="ovm-info">'+lv+' live'+(lv===1?'':'s')+' · '+fmtMinH(mn)+'</span><span class="ovm-val">'+(g>0?brlk(g):'—')+'</span></div>';
+          return '<div class="ov-srow ov-smulti'+(r.gmv>0?'':' semvenda')+'" title="'+tit+'">'
+            + '<div class="ovm-head">'+ic+'<span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span><b class="ovm-tot">'+(r.gmv>0?brlk(r.gmv):'—')+'</b></div>'
+            + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
+            + linhaMk(IC_TT,r.livesTT,r.minTT,r.gmvTT)
+            + linhaMk(IC_SH,r.livesSHP,r.minSHP,r.gmvSHP)
+            + '</div>';
+        }
         return '<div class="ov-srow'+(r.gmv>0?'':' semvenda')+'" title="'+tit+'">'
-          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span>'+sub+'</span></div>'
+          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em></span></div>'
           + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
           + '<div class="ov-spct"><b>'+(r.gmv>0?brlk(r.gmv):'—')+'</b>'+(racha
               ? '<em class="ovs-mix">'+IC_TT+brlk(r.gmvTT)+'</em><em class="ovs-mix">'+IC_SH+brlk(r.gmvSHP)+'</em>'
