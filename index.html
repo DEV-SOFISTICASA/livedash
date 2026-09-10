@@ -134,7 +134,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple
 .accent-pick,#themeBtn{display:none!important}
 
 /* ════ DATE FILTER COMPACTO (botão único) ════ */
-.dfilter-wrap{position:relative;display:flex;align-items:center;margin-bottom:18px}
+.dfilter-wrap{position:relative;display:flex;align-items:center;gap:8px;margin-bottom:18px}
 .dfilter-trigger{display:flex;align-items:stretch;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;overflow:hidden;font-size:13px;height:38px}
 .dfilter-trigger:hover{border-color:var(--border-hover)}
 .dfilter-trigger.active{border-color:var(--accent)}
@@ -1051,11 +1051,11 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .ss-mkt button img{width:13px;height:13px;border-radius:3px;display:block}
 .ss-mkt button:hover{color:var(--text)}
 .ss-mkt button.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.mkt-selector{position:absolute;top:calc(100% + 8px);right:0;z-index:60;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:8px;background:var(--surface);height:36px;padding:0 12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;user-select:none}
+.mkt-selector{position:relative;z-index:60;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:10px;background:var(--surface);height:38px;padding:0 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;user-select:none;transition:border-color .15s}
 .mkt-selector:hover{border-color:var(--border-hover)}
 .mkt-selector img{width:14px;height:14px;border-radius:3px;display:block}
 .mkt-cur{display:inline-flex;gap:3px;align-items:center}
-.mkt-pop{display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:210px;background:var(--surface);border:1px solid var(--border-2);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.25);padding:6px;z-index:80}
+.mkt-pop{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:210px;background:var(--surface);border:1px solid var(--border-2);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.25);padding:6px;z-index:80}
 .mkt-selector.open .mkt-pop{display:block}
 .mkt-item{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:8px;font-size:13px;color:var(--text)}
 .mkt-item:hover{background:var(--surface-2)}
@@ -1063,9 +1063,15 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .mkt-item.on .mkt-check{opacity:1}
 .mkt-item.on{background:var(--accent-bg)}
 @media(max-width:640px){
-  body.tem-mkts .store-selector{margin-bottom:46px}
-  .mkt-selector{left:0;right:auto}
-  .mkt-selector .mkt-pop{left:0;right:auto}
+  .actions{width:100%}
+  .store-selector{width:100%}
+  .store-selector .ss-current{flex:1;min-width:0}
+  .store-selector .ss-current #ssCurrentName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dfilter-wrap{display:grid;grid-template-columns:auto 1fr;gap:8px}
+  .mkt-selector{width:100%;justify-content:flex-start}
+  .mkt-selector .ss-chev{margin-left:auto}
+  .dfilter-trigger{width:100%}
+  .dfilter-trigger .seg-value{flex:1}
 }
 @media(max-width:640px){#ovShare .lvtxt{display:none}#ovShare .lvtag{padding:2px 5px;margin-left:5px}}
 </style>
@@ -1144,7 +1150,6 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
             <button class="ss-action-btn" onclick="if(window.recarregarNuvem)recarregarNuvem()">↻ Atualizar da nuvem</button>
           </div>
         </div>
-        <div class="mkt-selector" id="mktSelector" style="display:none"><span class="mkt-cur" id="mktCur"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""></span><span id="mktCurNome">Todas</span><span class="ss-chev">▾</span><div class="mkt-pop" id="mktPop"><div class="mkt-item" data-m="all"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""><span>Todas as plataformas</span><span class="mkt-check">✓</span></div><div class="mkt-item" data-m="tt"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><span>TikTok</span><span class="mkt-check">✓</span></div><div class="mkt-item" data-m="shp"><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""><span>Shopee</span><span class="mkt-check">✓</span></div></div></div>
       </div>
       <!-- Date filter movido pra abaixo das tabs -->
       <div class="accent-pick"><button class="theme-toggle" id="accentBtn" onclick="toggleAccentPop(event)" title="Cor de destaque"><svg class="ic"><use href="#i-palette"/></svg></button><div class="accent-pop" id="accentPop"><button class="accent-sw" style="background:#7c5cff" onclick="applyAccent(&#39;#7c5cff&#39;)" title="Roxo"></button><button class="accent-sw" style="background:#e5489a" onclick="applyAccent(&#39;#e5489a&#39;)" title="Magenta"></button><button class="accent-sw" style="background:#ec4899" onclick="applyAccent(&#39;#ec4899&#39;)" title="Rosa"></button><button class="accent-sw" style="background:#ef4444" onclick="applyAccent(&#39;#ef4444&#39;)" title="Vermelho"></button><button class="accent-sw" style="background:#f59e0b" onclick="applyAccent(&#39;#f59e0b&#39;)" title="Laranja"></button><button class="accent-sw" style="background:#16a34a" onclick="applyAccent(&#39;#16a34a&#39;)" title="Verde"></button><button class="accent-sw" style="background:#0891b2" onclick="applyAccent(&#39;#0891b2&#39;)" title="Azul"></button><button class="accent-sw active" style="background:#4f46e5" onclick="applyAccent(&#39;#4f46e5&#39;)" title="Índigo"></button><button class="accent-sw" style="background:#14b8a6" onclick="applyAccent(&#39;#14b8a6&#39;)" title="Petróleo"></button><button class="accent-sw" style="background:#06b6d4" onclick="applyAccent(&#39;#06b6d4&#39;)" title="Ciano"></button><button class="accent-sw" style="background:#10b981" onclick="applyAccent(&#39;#10b981&#39;)" title="Esmeralda"></button><button class="accent-sw" style="background:#65a30d" onclick="applyAccent(&#39;#65a30d&#39;)" title="Lima"></button><button class="accent-sw" style="background:#d97706" onclick="applyAccent(&#39;#d97706&#39;)" title="Âmbar"></button><button class="accent-sw" style="background:#f43f5e" onclick="applyAccent(&#39;#f43f5e&#39;)" title="Coral"></button><button class="accent-sw" style="background:#8b5cf6" onclick="applyAccent(&#39;#8b5cf6&#39;)" title="Lavanda"></button><button class="accent-sw" style="background:#0ea5e9" onclick="applyAccent(&#39;#0ea5e9&#39;)" title="Céu"></button><button class="accent-sw" style="background:#c026d3" onclick="applyAccent(&#39;#c026d3&#39;)" title="Fúcsia"></button><button class="accent-sw" style="background:#64748b" onclick="applyAccent(&#39;#64748b&#39;)" title="Grafite"></button></div></div>
@@ -1154,6 +1159,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 
   <!-- DATE FILTER COMPACTO -->
   <div class="dfilter-wrap">
+    <div class="mkt-selector" id="mktSelector" style="display:none"><span class="mkt-cur" id="mktCur"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""></span><span id="mktCurNome">Todas</span><span class="ss-chev">▾</span><div class="mkt-pop" id="mktPop"><div class="mkt-item" data-m="all"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""><span>Todas as plataformas</span><span class="mkt-check">✓</span></div><div class="mkt-item" data-m="tt"><img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=64" alt=""><span>TikTok</span><span class="mkt-check">✓</span></div><div class="mkt-item" data-m="shp"><img src="https://www.google.com/s2/favicons?domain=shopee.com.br&amp;sz=64" alt=""><span>Shopee</span><span class="mkt-check">✓</span></div></div></div>
     <div class="dfilter-trigger" id="dfilterTrigger">
       <div class="seg seg-label">Período</div>
       <div class="seg seg-value" id="dfilterLabel">Tudo</div>
