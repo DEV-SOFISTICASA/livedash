@@ -1064,14 +1064,15 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .mkt-item.on{background:var(--accent-bg)}
 @media(max-width:640px){
   .actions{width:100%}
-  .store-selector{width:100%}
-  .store-selector .ss-current{flex:1;min-width:0}
+  /* pilulas de filtro CENTRALIZADAS — texto na esquerda + seta na borda deixava um vazio feio no meio */
+  .store-selector{width:100%;justify-content:center}
+  .store-selector .ss-current{flex:0 1 auto;min-width:0}
   .store-selector .ss-current #ssCurrentName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .dfilter-wrap{display:grid;grid-template-columns:auto 1fr;gap:8px}
-  .mkt-selector{width:100%;justify-content:flex-start}
-  .mkt-selector .ss-chev{margin-left:auto}
-  .dfilter-trigger{width:100%}
-  .dfilter-trigger .seg-value{flex:1}
+  .mkt-selector{width:100%;justify-content:center}
+  .dfilter-trigger{width:100%;justify-content:center}
+  .dfilter-trigger .seg-value{flex:0 1 auto}
+  .dfilter-trigger .seg,.dfilter-trigger .seg-icon{padding-left:5px;padding-right:5px}
 }
 @media(max-width:640px){#ovShare .lvtxt{display:none}#ovShare .lvtag{padding:2px 5px;margin-left:5px}}
 </style>
