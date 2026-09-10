@@ -440,6 +440,8 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 
 /* ── VISÃO GERAL (repaginada) ── */
 .ov-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:14px}
+.ov-kpis.ovk-main{grid-template-columns:1fr}
+.ov-kpis.ovk-ind{grid-template-columns:repeat(4,1fr)}
 .ov-main .kpi-val.ov-big{font-size:clamp(26px,3.4vw,34px)}
 .ov-kpis .kpi{display:flex;flex-direction:column;justify-content:center;gap:3px}
 .ov-bars{width:100%;height:46px;display:block;margin:10px 0 6px}
@@ -496,7 +498,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 .ov-srow{display:grid;grid-template-columns:minmax(90px,150px) 1fr 52px;align-items:center;gap:14px;padding:8px 0}
 .ov-sname{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
 .ov-spct{font-size:12.5px;font-weight:700;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--text-2)}
-@media(max-width:1000px){.ov-kpis{grid-template-columns:1fr 1fr}.ov-main{grid-column:1/-1}.ov-row{grid-template-columns:1fr}}
+@media(max-width:1000px){.ov-kpis{grid-template-columns:1fr 1fr}.ov-kpis.ovk-ind{grid-template-columns:1fr 1fr}.ov-kpis.ovk-main{grid-template-columns:1fr}.ov-main{grid-column:1/-1}.ov-row{grid-template-columns:1fr}}
 
 /* ── ABA COMISSÕES (reconstruída) ── */
 .cm-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
@@ -994,6 +996,8 @@ body{ font-family:'Manrope',system-ui,-apple-system,sans-serif !important; }
    As media queries olham a largura da JANELA (que na prévia é a do PC); sem este
    espelho, a prévia socava o grid desktop em 430px e ficava tudo "comido". ── */
 body.ed-mobile .ov-kpis{grid-template-columns:1fr 1fr}
+body.ed-mobile .ov-kpis.ovk-ind{grid-template-columns:1fr 1fr}
+body.ed-mobile .ov-kpis.ovk-main{grid-template-columns:1fr}
 body.ed-mobile .ov-main{grid-column:1/-1}
 body.ed-mobile .ov-row{display:flex!important;flex-direction:column!important}
 body.ed-mobile .kpi-grid{grid-template-columns:repeat(2,1fr)}
@@ -1228,12 +1232,14 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 
   <!-- ════ TAB: PREMIAÇÃO ════ -->
   <div class="tab-content active fade-flash" data-tab-content="visao"><div class="tudo-section-head">Visão Geral</div>
-    <div class="ov-kpis">
+    <div class="ov-kpis ovk-main" data-ed-id="gmvper">
       <div class="kpi ov-main">
         <div class="kpi-lab"><span class="kpi-icon"><svg class="ic"><use href="#i-trend"/></svg></span>GMV no período</div>
         <div class="kpi-val ov-big"><span class="cur">R$ </span><span id="heroGmv">0,00</span></div>
         <div class="hero-delta neutral" id="heroDelta" style="margin-top:8px">—</div>
       </div>
+    </div>
+    <div class="ov-kpis ovk-ind" data-ed-id="indicadores">
       <div class="kpi"><div class="kpi-lab">Lives</div><div class="kpi-val" id="heroLives">0</div><div class="ov-delta neutral" id="ovDLives">—</div></div>
       <div class="kpi"><div class="kpi-lab">Itens vendidos</div><div class="kpi-val" id="heroItens">0</div><div class="ov-delta neutral" id="ovDItens">—</div></div>
       <div class="kpi"><div class="kpi-lab">Conversão</div><div class="kpi-val" id="kConv">—</div><div class="ov-delta neutral" id="ovDConv">—</div><div class="kpi-hint" id="kConvH">—</div></div>
@@ -1250,7 +1256,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
         <div id="ovPremio"></div>
     </div></div>
 
-    <div class="card" style="margin-bottom:14px"><div class="card-pad">
+    <div class="card" data-ed-id="participacao" style="margin-bottom:14px"><div class="card-pad">
       <div class="card-head"><div><div class="card-title">Participação por loja</div><div class="card-sub" id="ovShareSub">share do GMV no período</div></div></div>
       <div class="ov-share-wrap"><div class="ov-donut"><canvas id="ovShareChart"></canvas><div class="ov-donut-c" id="ovDonutCenter"></div></div><div id="ovShare" class="ov-share-list"></div></div>
     </div></div>
@@ -4508,6 +4514,15 @@ var LiveBlocks=(function(){
     }
     if(k==='visao' && c.x.indexOf('b1')>=0){ c.x=c.x.filter(function(x){return x!=='b1';}); if(c.x.indexOf('gmvdia')<0) c.x.push('gmvdia','premiacao'); }
     if(k==='visao' && c.s['b1']!=null && c.s.gmvdia==null){ c.s.gmvdia=c.s['b1']; delete c.s['b1']; }
+    // migração: o bloco 'b0' (GMV grande + 4 quadrados) virou 'gmvper'+'indicadores'; a participação ganhou id fixo
+    if(k==='visao'){
+      var i0=c.o.indexOf('b0'); if(i0>=0 && c.o.indexOf('gmvper')<0){ c.o.splice(i0,1,'gmvper','indicadores'); }
+      if(c.x.indexOf('b0')>=0){ c.x=c.x.filter(function(x){return x!=='b0';}); if(c.x.indexOf('gmvper')<0) c.x.push('gmvper','indicadores'); }
+      if(c.s['b0']!=null && c.s.gmvper==null){ c.s.gmvper=c.s['b0']; delete c.s['b0']; }
+      var i3=c.o.indexOf('b3'); if(i3>=0 && c.o.indexOf('participacao')<0){ c.o.splice(i3,1,'participacao'); }
+      c.x=c.x.map(function(x){ return x==='b3'?'participacao':x; });
+      if(c.s['b3']!=null && c.s.participacao==null){ c.s.participacao=c.s['b3']; delete c.s['b3']; }
+    }
     return c; }
   function order(k){ return conf(k).o; }
   function key(){ return (window.LiveAccount&&LiveAccount.user&&LiveAccount.user())?'blocks:'+LiveAccount.user().id:null; }
