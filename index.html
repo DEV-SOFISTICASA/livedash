@@ -476,6 +476,8 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
 #ovShare .ovs-nm{min-width:0;display:flex;flex-direction:column;line-height:1.25}
 #ovShare .ovs-n1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;color:var(--text)}
 #ovShare .ovs-lv{font-style:normal;font-size:9.5px;color:var(--text-4);font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+#ovShare .ovs-lv.ovs-lvmk{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-2);text-transform:none;letter-spacing:0;line-height:1.5;font-family:'JetBrains Mono',monospace;font-weight:600}
+#ovShare .ovs-lvmk .ovs-mki{width:11px;height:11px;margin-right:1px}
 @media(max-width:640px){#ovShare .ovs-lv{letter-spacing:0;font-size:9px}}
 #ovShare .ov-srow.semvenda{opacity:.66}
 #ovShare .ov-srow.semvenda .ov-spct em{color:var(--warn,#e0a340);font-weight:700;text-transform:none;letter-spacing:0}
@@ -2892,7 +2894,11 @@ function renderOvExtras(){
                  gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
                  gmvTT: rs.reduce((a,r)=>a+(((r.mk||'tt')==='tt')?r.g:0),0),
                  gmvSHP: rs.reduce((a,r)=>a+((r.mk==='shp')?r.g:0),0),
-                 min: rs.reduce((a,r)=>a+(r.duE!=null?r.duE:(r.du||0)),0) };   // du em MINUTOS → horas no ar
+                 livesTT: rs.filter(r=>(r.mk||'tt')==='tt').length,
+                 livesSHP: rs.filter(r=>r.mk==='shp').length,
+                 minTT: rs.reduce((a,r)=>a+(((r.mk||'tt')==='tt')?(r.du||0):0),0),   // hora cheia do mkt
+                 minSHP: rs.reduce((a,r)=>a+((r.mk==='shp')?(r.du||0):0),0),
+                 min: rs.reduce((a,r)=>a+(r.duE!=null?r.duE:(r.du||0)),0) };   // du em MINUTOS → horas no ar (união honesta)
       // entra quem VENDEU ou quem simplesmente FEZ LIVE (loja que ficou no ar sem vender
       // some do gráfico e ninguém percebe — Gabriel pediu pra aparecer)
       }).filter(r=>r.gmv>0 || r.lives>0).sort((a,b)=>(b.gmv-a.gmv) || (b.lives-a.lives));
@@ -2900,13 +2906,21 @@ function renderOvExtras(){
       // legenda (lista) ao lado do donut
       elS.innerHTML = rows.map(r=>{
         const pct = tot>0 ? r.gmv/tot*100 : 0;
-        const ic = r.logo ? '<span class="ovs-logo" style="background-image:url('+r.logo+')"></span>' : '<span class="ovs-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
         const IC_TT='<img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=tiktok.com&sz=64" alt="TikTok">';
         const IC_SH='<img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=shopee.com.br&sz=64" alt="Shopee">';
+        const ic = r.logo ? '<span class="ovs-logo" style="background-image:url('+r.logo+')"></span>' : '<span class="ovs-dot" style="background:'+(r.color||'var(--accent)')+'"></span>';
         const racha = (typeof temMix==='function' && temMix() && r.gmvTT>0 && r.gmvSHP>0);
-        const tit = brl(r.gmv) + (racha ? (' — TikTok '+brl(r.gmvTT)+' · Shopee '+brl(r.gmvSHP)) : '');
+        const doisMkts = r.livesTT>0 && r.livesSHP>0;
+        const tit = brl(r.gmv)
+          + (racha ? (' — TikTok '+brl(r.gmvTT)+' · Shopee '+brl(r.gmvSHP)) : '')
+          + (doisMkts ? (' — no ar: TikTok '+fmtMinH(r.minTT)+' · Shopee '+fmtMinH(r.minSHP)+' · juntas '+fmtMinH(r.min)+' (simultânea conta 1x)') : '');
+        // horas por marketplace: loja nas 2 plataformas ganha uma linha POR mkt (logo + lives + horas)
+        const sub = doisMkts
+          ? '<em class="ovs-lv ovs-lvmk">'+IC_TT+r.livesTT+' live'+(r.livesTT===1?'':'s')+' · '+fmtMinH(r.minTT)+'</em>'
+            + '<em class="ovs-lv ovs-lvmk">'+IC_SH+r.livesSHP+' live'+(r.livesSHP===1?'':'s')+' · '+fmtMinH(r.minSHP)+'</em>'
+          : '<em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em>';
         return '<div class="ov-srow'+(r.gmv>0?'':' semvenda')+'" title="'+tit+'">'
-          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span><em class="ovs-lv">'+r.lives+' live'+(r.lives===1?'':'s')+(r.min>0?' · '+fmtMinH(r.min):'')+'</em></span></div>'
+          + '<div class="ov-sname">'+ic+'<span class="ovs-nm"><span class="ovs-n1">'+r.name+(typeof mktBadge==='function'?mktBadge(r):'')+(typeof lvTagHtml==='function'?lvTagHtml(r):'')+'</span>'+sub+'</span></div>'
           + '<div class="ov-track"><div class="ov-fill" style="background:'+(r.color||'var(--accent)')+';width:'+pct.toFixed(1)+'%"></div></div>'
           + '<div class="ov-spct"><b>'+(r.gmv>0?brlk(r.gmv):'—')+'</b>'+(racha
               ? '<em class="ovs-mix">'+IC_TT+brlk(r.gmvTT)+'</em><em class="ovs-mix">'+IC_SH+brlk(r.gmvSHP)+'</em>'
