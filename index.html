@@ -138,6 +138,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple
 .dfilter-wrap .store-selector{order:1}
 .dfilter-wrap .mkt-selector{order:2}
 .dfilter-wrap .dfilter-trigger{order:3}
+/* o seletor de lojas saiu do canto direito do topo e agora abre a linha: a lista
+   precisa cair a partir da BORDA ESQUERDA dele, senao vaza pra fora da tela */
+.dfilter-wrap .ss-popover{left:0;right:auto}
 .dfilter-trigger{display:flex;align-items:stretch;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;overflow:hidden;font-size:13px;height:38px}
 .dfilter-trigger:hover{border-color:var(--border-hover)}
 .dfilter-trigger.active{border-color:var(--accent)}
