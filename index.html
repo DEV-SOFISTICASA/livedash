@@ -3843,10 +3843,13 @@ function cronoAvaliar(dia){
       const ultimo=o.tt.length?Math.max.apply(null,o.tt.map(l=>l.fim)):null;
       const vivo=o.tt.some(l=>l.vivo);
       const atr=(primeiro!=null && primeiro>ini+tol)?(primeiro-ini):0;
+      if(o.tt.length){ const lojas=o.tt.map(l=>l.s.name).filter((v,i,a)=>a.indexOf(v)===i).join(', '); // o que foi visto de verdade
+        o.real=(b.t==='gravada'?'replay no ar ':'no ar ')+cronoHHMM(primeiro)+'–'+(o.tt.some(l=>l.vivo)?'agora':cronoHHMM(ultimo))+' · '+lojas; }
       if(agora<ini){ o.st='futuro'; }
       else if(!o.tt.length){
         o.st = agora<ini+tol ? 'aguardando' : (agora<fim ? 'fora' : 'faltou');
         if(o.st==='fora') o.nota='nada no ar desde '+cronoHHMM(ini);
+        if(o.st==='faltou') o.nota=b.t==='gravada'?'nenhuma live gravada no ar nesse horário':'nenhuma live dela nesse horário';
       }
       else if(agora<fim){                                   // bloco em andamento
         if(vivo || ultimo>=agora-tol){ o.st='aovivo'; if(atr) o.nota='começou '+cronoHHMM(primeiro)+' ('+atr+' min atrasada)'; }
@@ -3908,7 +3911,7 @@ function renderCronograma(){
     const blks=t.blocos.map(o=>{ if(o.ini==null||o.fim==null||o.fim<=o.ini) return '';
       const b=o.b;
       const tipo=b.t==='live'?('Ao vivo'+(b.shp?' + Shopee '+cronoCap(b.shp):'')):b.t==='gravada'?'Live gravada':b.t==='ajuste'?'Ajuste sacolinha':(b.l||'Pausa');
-      const tip=cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim)+' · '+tipo+(ST[o.st]?' · '+ST[o.st]:'')+(o.nota?' · '+o.nota:'')+(o.semShp?' · Shopee '+cronoCap(b.shp)+' faltou':'');
+      const tip=cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim)+' · '+tipo+(ST[o.st]?' · '+ST[o.st]:'')+(o.nota?' · '+o.nota:'')+(o.semShp?' · Shopee '+cronoCap(b.shp)+' faltou':'')+((o.st==='ok'||o.st==='aovivo')&&o.real?' · '+o.real:'');
       const w=pct(o.fim)-pct(o.ini);
       return '<div class="cr-blk t-'+b.t+' s-'+o.st+(o.semShp?' semshp':'')+'" style="left:'+pct(o.ini).toFixed(2)+'%;width:'+w.toFixed(2)+'%" title="'+ppEsc(tip)+'">'
         +(w>7?'<span>'+cronoHHMM(o.ini)+'</span>':'')+(b.shp&&b.t==='live'?'<i class="cr-shp"></i>':'')+'</div>';
@@ -3945,8 +3948,8 @@ function renderCronoLista(av,el,res,pr){
     const feitos=bl.filter(o=>o.st==='ok'||o.st==='atrasou'||o.st==='aovivo').length;
     const rows=bl.map(o=>{
       const b=o.b, agora=av.ehHoje && av.agora>=o.ini && av.agora<o.fim;
-      const tipo=b.t==='gravada'?'Gravada':(TT+(b.shp?SH:'')+' Ao vivo');
-      const nota=[o.nota, (o.semShp?'sem o Shopee '+cronoCap(b.shp):'')].filter(Boolean).join(' · ');
+      const tipo=b.t==='gravada'?'Live gravada':(TT+(b.shp?SH:'')+' Ao vivo');
+      const nota=[o.nota, ((o.st==='ok'||o.st==='aovivo')&&o.real?o.real:''), (o.semShp?'sem o Shopee '+cronoCap(b.shp):'')].filter(Boolean).join(' · ');
       return '<div class="crm-row s-'+o.st+(agora?' agora':'')+'"><i class="dot"></i><span class="crm-h">'+cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim)+'</span><span class="crm-t">'+tipo+'</span><span class="crm-s">'+(ST[o.st]||'')+'</span>'
         +(nota?'<span class="crm-n'+((o.semShp||o.st==='atrasou'||o.st==='parcial'||o.st==='fora')?' ruim':'')+'">'+ppEsc(nota)+'</span>':'')+'</div>';
     }).join('');
