@@ -14,6 +14,10 @@ Estado e memória do projeto: `~/.claude/projects/C--Users-gabri/memory/livedash
 - Seção nova: HTML `data-tab-content` + `SEC_KEYS` + `TUDO_SECTIONS` + `LABELS` + chip `.tn-chip` + `NM`/`IC` da nav mobile (IC aparece 2×) + chamar o render nos 2 pontos de `render()`.
 - `PREMIO` (la-premio) é o blob sincronizado entre aparelhos (pessoas, faixas, cronograma). Salvar com `savePremioOnly(true)`.
 
+## App instalável (PWA)
+- `manifest.json` + `sw.js` (rede primeiro, cache só se a rede cair) + `img/icon-*.png` (gerados da logo embutida). Barra "Instalar app" só no celular (script no fim do body), some quando já está instalado.
+- Cronograma: no celular (≤640px ou `window.__cronoForceMobile=true`) vira lista por pessoa (`renderCronoLista`); no PC é a linha do tempo.
+
 ## Como testar
 - Servidor local: entrada `livedash` no `~/.claude/launch.json` (porta 8129). Página deslogada: esconder `#sbAuthOverlay`, tirar `body.no-stores`, injetar lojas fictícias em `STORES` (+ `window.STORES_ALL`) e chamar o render da seção.
 - O pane do app não tira print dessa página; pra ver o layout: extrair os `<style>` + o `outerHTML` renderizado num harness e usar `chrome.exe --headless=new --screenshot` (celular = iframe de 390px, o Chrome não encolhe a janela abaixo de ~500px).
