@@ -3910,7 +3910,10 @@ function renderCronograma(){
 function renderCronoAlerta(av,probs){
   const el=document.getElementById('cronoAlerta'); if(!el) return;
   probs=probs||cronoProblemas(av);
-  const agora=av.ehHoje ? probs.filter(p=>p.st==='fora' || (p.st==='shp' && p.g===2)) : [];
+  let agora=av.ehHoje ? probs.filter(p=>p.st==='fora' || (p.st==='shp' && p.g===2)) : [];
+  // ?cronoteste na URL: mostra uma faixa de exemplo pra ver ONDE ela aparece (some sem o parâmetro)
+  let teste=false; try{ teste=new URLSearchParams(location.search).has('cronoteste'); }catch(e){}
+  if(teste && !agora.length) agora=[{st:'fora',t:{nome:'Exemplo'},msg:'fora do ar: deveria estar ao vivo no TikTok + Shopee Monaco desde 09:30 (faixa de TESTE: tire ?cronoteste da URL pra sumir)'}];
   if(!agora.length){ el.style.display='none'; el.innerHTML=''; return; }
   const grave=agora.some(p=>p.st==='fora');
   el.className='cr-alerta '+(grave?'grave':'medio'); el.style.display='';
