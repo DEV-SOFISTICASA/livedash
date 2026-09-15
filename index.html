@@ -574,6 +574,81 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;appearance
   .pp-live{gap:6px;padding:7px 10px}
   .pp-mks{padding:6px 10px 7px}
 }
+/* ── Cronograma de lives: faixa de alerta no topo + linha do tempo planejado × real + editor ── */
+.cr-alerta{display:flex;align-items:center;gap:12px;margin:12px 0 2px;padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.45;border:1px solid}
+.cr-alerta.grave{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.45);color:#fecaca}
+.cr-alerta.medio{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.45);color:#fde68a}
+html[data-theme="light"] .cr-alerta.grave{color:#7f1d1d}html[data-theme="light"] .cr-alerta.medio{color:#78350f}
+.cr-alerta .cr-al-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;background:rgba(239,68,68,.2);color:#ef4444;animation:lvblink 1.6s ease-in-out infinite}
+.cr-alerta.medio .cr-al-ic{background:rgba(245,158,11,.2);color:#f59e0b}
+.cr-alerta .cr-al-ic svg{width:20px;height:20px}
+.cr-alerta .cr-al-tx{flex:1;min-width:0}
+.cr-alerta .cr-al-tx b{letter-spacing:.04em}
+.cr-alerta .cr-al-go{color:inherit;font-weight:700;font-size:12px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.cr-resumo{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.cr-kpi{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);font-size:11.5px;color:var(--text-3)}
+.cr-kpi b{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text)}
+.cr-kpi.k-ok b{color:#22c55e}.cr-kpi.k-amb b{color:#f59e0b}.cr-kpi.k-red b{color:#ef4444}.cr-kpi.k-live b{color:var(--accent)}
+.cr-tl{display:flex;flex-direction:column;gap:12px}
+.cr-axis,.cr-row{display:flex;align-items:center;gap:10px}
+.cr-who{width:150px;flex:none;display:flex;align-items:center;gap:9px;min-width:0}
+.cr-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex:none;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.cr-nm{font-weight:700;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sts{display:block;font-weight:500;font-size:11px;color:var(--text-3);font-family:'JetBrains Mono',monospace}
+.cr-warn{display:inline-block;margin-left:5px;width:14px;height:14px;border-radius:50%;background:#f59e0b;color:#000;font-size:10px;text-align:center;line-height:14px;font-weight:800;cursor:help}
+.cr-track{flex:1;position:relative;min-width:0}
+.cr-axis .cr-track{height:14px}
+.cr-tick{position:absolute;top:0;transform:translateX(-50%);font-size:10px;color:var(--text-4);font-family:'JetBrains Mono',monospace}
+.cr-lane{position:relative;height:26px}
+.cr-lane.cr-done{height:7px;margin-top:3px}
+.cr-plan::before{content:"";position:absolute;inset:0;border-radius:8px;background:var(--surface-2);border:1px dashed var(--border-2)}
+.cr-blk{position:absolute;top:0;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#fff;overflow:hidden;white-space:nowrap;box-sizing:border-box;border:1px solid transparent;cursor:default}
+.cr-blk.t-pausa,.cr-blk.t-ajuste{top:6px;height:14px;background:var(--surface-3);color:var(--text-4);border-color:var(--border-2);font-size:9px}
+.cr-blk.t-ajuste{background:rgba(245,158,11,.16);color:#f59e0b;border-color:rgba(245,158,11,.35)}
+.cr-blk.s-futuro{background:transparent;border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:var(--text-3)}
+.cr-blk.s-aguardando{background:var(--surface-3);color:var(--text-3);border-color:var(--border-2)}
+.cr-blk.s-ok{background:#22c55e;color:#052e16}
+.cr-blk.s-atrasou,.cr-blk.s-parcial{background:#f59e0b;color:#451a03}
+.cr-blk.s-faltou{background:#ef4444}
+.cr-blk.s-fora{background:#ef4444;animation:lvblink 1.6s ease-in-out infinite}
+.cr-blk.s-aovivo{background:var(--accent);animation:lvpulse 1.5s ease-out infinite}
+.cr-blk.t-gravada.s-ok{background:repeating-linear-gradient(135deg,#22c55e 0 6px,#16a34a 6px 12px)}
+.cr-blk.t-gravada.s-futuro{border-style:dashed}
+.cr-blk.semshp{box-shadow:inset 0 0 0 2px #ee4d2d}
+.cr-shp{position:absolute;right:3px;top:3px;width:8px;height:8px;border-radius:50%;background:#ee4d2d;border:1px solid #fff}
+.cr-real{position:absolute;top:0;height:7px;border-radius:4px;background:var(--accent);opacity:.95}
+.cr-real.shp{background:#ee4d2d}
+.cr-real.vivo{box-shadow:0 0 0 2px rgba(255,69,58,.4)}
+.cr-now{position:absolute;top:-5px;bottom:-3px;width:2px;background:#ff453a;border-radius:2px;z-index:2;box-shadow:0 0 8px rgba(255,69,58,.7)}
+.cr-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:10.5px;color:var(--text-3)}
+.cr-legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.cr-legend i{display:inline-block;width:12px;height:8px;border-radius:3px;box-sizing:border-box}
+.cr-legend .l-ok{background:#22c55e}.cr-legend .l-amb{background:#f59e0b}.cr-legend .l-red{background:#ef4444}.cr-legend .l-live{background:var(--accent)}.cr-legend .l-fut{border:1px dashed var(--accent)}.cr-legend .l-real{background:var(--accent);height:5px}.cr-legend .l-realshp{background:#ee4d2d;height:5px}
+.cr-probs{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.cr-p{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);font-size:12.5px;color:var(--text-2)}
+.cr-p b{color:var(--text)}
+.cr-p i{width:8px;height:8px;border-radius:50%;flex:none;background:var(--text-4)}
+.cr-p.s-fora i{background:#ef4444;animation:lvblink 1.6s ease-in-out infinite}.cr-p.s-faltou i{background:#ef4444}.cr-p.s-shp i{background:#ee4d2d}.cr-p.s-atrasou i,.cr-p.s-parcial i{background:#f59e0b}.cr-p.s-ok i{background:#22c55e}
+.cr-btn{padding:7px 12px;border-radius:8px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.cr-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cr-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.cr-ed-top{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:12px;font-size:12.5px;color:var(--text-2)}
+.cr-ed-top input[type=number]{width:56px;padding:5px 7px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);color:var(--text)}
+.cr-ed-dias{display:flex;gap:8px;flex-wrap:wrap}
+.cr-ed-dias label{display:inline-flex;align-items:center;gap:4px;font-size:12px}
+.cr-ed-turno{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--surface-2)}
+.cr-ed-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.cr-ed-nome{width:140px;padding:6px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:700;font-family:inherit}
+.cr-ed-pid{flex:1;min-width:0;padding:6px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px}
+.cr-ed-b{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-3)}
+.cr-ed-b input,.cr-ed-b select{padding:5px 7px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit}
+.cr-ed-b .l{width:150px}
+.cr-ed-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
+@media(max-width:640px){
+  .cr-who{width:96px;gap:6px}.cr-nm{font-size:12px}.cr-av{width:24px;height:24px;font-size:11px}.cr-sts{font-size:10px}
+  .cr-blk span{display:none}.cr-alerta{padding:10px 12px;font-size:12.5px;flex-wrap:wrap}.cr-alerta .cr-al-go{width:100%;text-align:right}
+  .cr-tick:not(.t3){display:none}#cronoEditBtn{white-space:nowrap;padding:6px 9px;font-size:11px}
+}
 .cm-card-gmv,.cm-card-com{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:7px 0}
 .cm-card-gmv{border-bottom:1px dashed var(--border)}
 .cm-card-gmv .lab,.cm-card-com .lab{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3)}
@@ -1219,7 +1294,8 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
   </div>
 
   <!-- VISÃO -->
-  <div class="tudo-nav" id="tudoNav"><span class="tn-chip" data-go="visao">Visão Geral</span><span class="tn-chip" data-go="dia">Por Dia</span><span class="tn-chip" data-go="semana">Por Semana</span><span class="tn-chip" data-go="quando">Quando</span><span class="tn-chip" data-go="oque">O que vende</span><span class="tn-chip" data-go="performance">Performance</span><span class="tn-chip" data-go="historico">Histórico</span><span class="tn-chip" data-go="lojas">Lojas</span><span class="tn-chip" data-go="pessoas">Por Pessoa</span></div>
+  <div id="cronoAlerta" class="cr-alerta" style="display:none"></div>
+  <div class="tudo-nav" id="tudoNav"><span class="tn-chip" data-go="visao">Visão Geral</span><span class="tn-chip" data-go="dia">Por Dia</span><span class="tn-chip" data-go="semana">Por Semana</span><span class="tn-chip" data-go="quando">Quando</span><span class="tn-chip" data-go="oque">O que vende</span><span class="tn-chip" data-go="performance">Performance</span><span class="tn-chip" data-go="historico">Histórico</span><span class="tn-chip" data-go="lojas">Lojas</span><span class="tn-chip" data-go="pessoas">Por Pessoa</span><span class="tn-chip" data-go="crono">Cronograma</span></div>
 
   <!-- POR DIA -->
   
@@ -1316,6 +1392,14 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
     <div class="card"><div class="card-pad">
       <div class="card-head"><div><div class="card-title">Lives por pessoa</div><div class="card-sub" id="pessoasSub">no período · todas as lojas</div></div></div>
       <div id="pessoasList" class="pp-grid"></div>
+    </div></div>
+  </div><div class="tab-content fade-flash active" data-tab-content="crono"><div class="tudo-section-head">Cronograma</div>
+    <div class="card"><div class="card-pad">
+      <div class="card-head"><div><div class="card-title">Cronograma de lives</div><div class="card-sub" id="cronoSub">hoje · planejado × real</div></div>
+        <button class="cr-btn" id="cronoEditBtn" onclick="openCronoModal()" hidden>Editar horários</button></div>
+      <div id="cronoResumo" class="cr-resumo"></div>
+      <div id="cronoTimeline" class="cr-tl"></div>
+      <div id="cronoProblemas" class="cr-probs"></div>
     </div></div>
   </div><div class="tab-content active" data-tab-content="dia"><div class="tudo-section-head">Por Dia</div>
     <div class="card"><div class="card-pad">
@@ -1477,6 +1561,7 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 <div class="modal-bg" id="tagModal" style="display:none" onclick="if(event.target===this)closeTagModal()"><div class="la-modal-inner"><div class="la-modal-head"><div class="la-modal-title">Marcar responsável</div><button class="la-modal-x" onclick="closeTagModal()">✕</button></div><div id="tagModalBody"></div></div></div>
 <div class="modal-bg" id="compModal" style="display:none" onclick="if(event.target===this)this.style.display=&#39;none&#39;"><div class="la-modal-inner" style="max-width:760px"><div class="la-modal-head"><div class="la-modal-title">Comprovante</div><button class="la-modal-x" onclick="document.getElementById(&#39;compModal&#39;).style.display=&#39;none&#39;">✕</button></div><div id="compModalBody"></div></div></div>
 <div class="modal-bg" id="respCfgModal" style="display:none" onclick="if(event.target===this)this.style.display=&#39;none&#39;"><div class="la-modal-inner"><div class="la-modal-head"><div class="la-modal-title">Pessoas &amp; regras da premiação</div><button class="la-modal-x" onclick="document.getElementById(&#39;respCfgModal&#39;).style.display=&#39;none&#39;">✕</button></div><div id="respCfgBody"></div></div></div>
+<div class="modal-bg" id="cronoModal" style="display:none" onclick="if(event.target===this)this.style.display='none'"><div class="la-modal-inner" style="max-width:780px"><div class="la-modal-head"><div class="la-modal-title">Cronograma de lives</div><button class="la-modal-x" onclick="document.getElementById('cronoModal').style.display='none'">✕</button></div><div id="cronoBody"></div></div></div>
 <div class="modal-bg" id="commModal">
   <div class="modal modal-wide">
     <h3>Configurar premiação</h3>
@@ -2585,7 +2670,7 @@ function render(){
     document.querySelector('#prodTable tbody').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text-4);padding:20px">Sem dados</td></tr>';
     { const _dl=document.getElementById('diaList'); if(_dl) _dl.innerHTML='<div class="cm-empty">Sem dados</div>'; }
     renderLojasTab();
-    renderPorPessoa();
+    renderPorPessoa(); if(typeof renderCronograma==='function') renderCronograma();
     return;
   }
 
@@ -2688,7 +2773,7 @@ function render(){
   renderPorDia(data);
   renderPorSemana(data);
   renderLojasTab();
-  renderPorPessoa();
+  renderPorPessoa(); if(typeof renderCronograma==='function') renderCronograma();
 }
 
 function renderEmptyState(){
@@ -3656,6 +3741,240 @@ function renderPorPessoa(){
 }
 
 // ════════════════════════════════════════════════════════
+// CRONOGRAMA DE LIVES — planejado (planilha HORARIOS LIVE) × real (o que o robô viu)
+// Guardado em PREMIO.cronograma (viaja no la-premio: mesmo sync/merge da premiação).
+// Bloco: {i:'07:30', f:'09:00', t:'live'|'gravada'|'ajuste'|'pausa', shp:'monaco', l:'Almoço'}
+// ════════════════════════════════════════════════════════
+function cronoDefault(){
+  // Seed = planilha "HORARIOS LIVE.xlsx" (15/09/2026): 3 turnos, "SH MON" = a mesma live também no Shopee da Monaco
+  const L=(i,f,shp)=>({i:i,f:f,t:'live',shp:shp||''}), G=(i,f)=>({i:i,f:f,t:'gravada'}),
+        A=(i,f)=>({i:i,f:f,t:'ajuste'}), P=(i,f,l)=>({i:i,f:f,t:'pausa',l:l||''});
+  return { _v:1, tol:10, dias:[1,2,3,4,5,6], turnos:[
+    { nome:'Giovanna',   pid:'', blocos:[A('07:00','07:30'),L('07:30','09:00','monaco'),P('09:00','09:30'),L('09:30','11:00','monaco'),P('11:00','12:00','Almoço'),L('12:00','13:00','monaco'),P('13:00','13:30'),L('13:30','14:30'),P('14:30','15:00'),G('15:00','16:00')] },
+    { nome:'Alessandra', pid:'', blocos:[A('09:00','09:30'),L('09:30','10:30'),P('10:30','11:00'),L('11:00','12:00','monaco'),P('12:00','13:00','Almoço'),L('13:00','14:30','monaco'),P('14:30','15:00'),L('15:00','16:30','monaco'),P('16:30','17:00'),G('17:00','18:00')] },
+    { nome:'Taciana',    pid:'', blocos:[G('15:00','16:00'),A('16:00','16:30'),L('16:30','18:00','monaco'),P('18:00','18:30'),L('18:30','21:00','monaco')] }
+  ]};
+}
+function cronoConf(){ ensureResp(); if(!PREMIO.cronograma || !Array.isArray(PREMIO.cronograma.turnos)) PREMIO.cronograma=cronoDefault(); return PREMIO.cronograma; }
+function cronoNorm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim(); }
+function cronoCap(s){ s=String(s||''); return s.charAt(0).toUpperCase()+s.slice(1); }
+function cronoPid(t){ // responsável do turno: pid gravado, senão casa pelo começo do nome (Giov→Giovanna)
+  ensureResp(); const rs=PREMIO.responsaveis||[];
+  if(t.pid && rs.some(p=>p.id===t.pid)) return t.pid;
+  const n=cronoNorm(t.nome).slice(0,4); if(!n) return '';
+  const p=rs.find(p=>cronoNorm(p.nome).slice(0,4)===n); return p?p.id:'';
+}
+function cronoMin(hhmm){ const m=/^(\d{1,2}):(\d{2})/.exec(String(hhmm||'')); return m?(+m[1])*60+(+m[2]):null; }
+function cronoHHMM(min){ min=Math.max(0,Math.round(min||0)); return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0'); }
+function cronoAgoraBR(){ return cronoMin(new Date().toLocaleTimeString('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})); }
+function cronoDiaSel(){ // dia mostrado: filtro de 1 dia manda; período maior cai em hoje
+  const f=CURRENT_FILTER||{}, hoje=hojeBR();
+  if(f.type==='yesterday') return menosDias(hoje,1);
+  if(f.type==='day' && f.value) return f.value;
+  return hoje;
+}
+function cronoUniao(ivs){ // minutos cobertos pela união de intervalos [a,b]
+  const s=ivs.filter(x=>x[1]>x[0]).sort((a,b)=>a[0]-b[0]); let tot=0, cur=null;
+  s.forEach(x=>{ if(!cur||x[0]>cur[1]){ if(cur) tot+=cur[1]-cur[0]; cur=[x[0],x[1]]; } else if(x[1]>cur[1]) cur[1]=x[1]; });
+  if(cur) tot+=cur[1]-cur[0]; return tot;
+}
+
+// Avalia o dia: pra cada bloco planejado, o que aconteceu de verdade.
+// st: futuro | aguardando | aovivo | ok | atrasou | parcial | fora (agora, sem live) | faltou | neutro (pausa/ajuste)
+function cronoAvaliar(dia){
+  const conf=cronoConf(), hoje=hojeBR(), ehHoje=dia===hoje;
+  const agora=ehHoje?cronoAgoraBR():(dia<hoje?24*60+1:-1);   // passado: tudo já aconteceu; futuro: nada ainda
+  const tol=(conf.tol==null||conf.tol===''||!isFinite(+conf.tol))?10:Math.max(0,+conf.tol); // 0 é válido (sem tolerância)
+  const lojas=(window.STORES_ALL||STORES||[]);
+  const lives=[];
+  lojas.forEach(s=>{ (s.regs||[]).forEach(r=>{
+    if(r.d!==dia) return; const ini=cronoMin((r.dt||'').slice(11,16)); if(ini==null) return;
+    const rooms=(s.aoVivoRooms&&s.aoVivoRooms.length)?s.aoVivoRooms:(s.aoVivoRoom!=null?[s.aoVivoRoom]:[]);
+    const vivo=ehHoje && (typeof lojaAoVivo==='function') && lojaAoVivo(s) && rooms.some(v=>v!=null&&String(v)===String(r.id));
+    let fim=ini+(r.du||0); if(vivo && agora>fim) fim=agora;   // live em andamento: conta até agora
+    let pids=[]; try{ pids=resolveRespMulti(r,s.id)||[]; }catch(e){}
+    lives.push({r:r,s:s,ini:ini,fim:fim,vivo:vivo,pids:pids,mk:(r.mk==='shp'?'shp':'tt'),loja:cronoNorm(s.name)});
+  }); });
+  const dow=new Date(dia+'T12:00:00').getDay();
+  const ativo=(conf.dias||[1,2,3,4,5,6]).indexOf(dow)>=0;
+  const turnos=(conf.turnos||[]).map(t=>{
+    const pid=cronoPid(t);
+    const blocos=(t.blocos||[]).map(b=>{
+      const ini=cronoMin(b.i), fim=cronoMin(b.f);
+      const o={b:b,ini:ini,fim:fim,st:'neutro',tt:[],shp:[],cover:0,shpCover:0,nota:'',semShp:false};
+      if(ini==null||fim==null||fim<=ini||b.t==='pausa'||b.t==='ajuste') return o;
+      const len=fim-ini;
+      const quem = b.t==='gravada' ? (l=>l.pids.indexOf('__sem__')>=0) : (l=>!!pid && l.pids.indexOf(pid)>=0);
+      o.tt=lives.filter(l=>l.mk==='tt' && quem(l) && l.fim>ini && l.ini<fim);
+      o.cover=cronoUniao(o.tt.map(l=>[Math.max(l.ini,ini),Math.min(l.fim,fim)]));
+      if(b.shp && b.t==='live'){
+        o.shp=lives.filter(l=>l.mk==='shp' && l.loja.indexOf(cronoNorm(b.shp))>=0 && l.fim>ini && l.ini<fim);
+        o.shpCover=cronoUniao(o.shp.map(l=>[Math.max(l.ini,ini),Math.min(l.fim,fim)]));
+      }
+      const primeiro=o.tt.length?Math.min.apply(null,o.tt.map(l=>l.ini)):null;
+      const ultimo=o.tt.length?Math.max.apply(null,o.tt.map(l=>l.fim)):null;
+      const vivo=o.tt.some(l=>l.vivo);
+      const atr=(primeiro!=null && primeiro>ini+tol)?(primeiro-ini):0;
+      if(agora<ini){ o.st='futuro'; }
+      else if(!o.tt.length){
+        o.st = agora<ini+tol ? 'aguardando' : (agora<fim ? 'fora' : 'faltou');
+        if(o.st==='fora') o.nota='nada no ar desde '+cronoHHMM(ini);
+      }
+      else if(agora<fim){                                   // bloco em andamento
+        if(vivo || ultimo>=agora-tol){ o.st='aovivo'; if(atr) o.nota='começou '+cronoHHMM(primeiro)+' ('+atr+' min atrasada)'; }
+        else { o.st='fora'; o.nota='saiu do ar às '+cronoHHMM(ultimo); }
+      }
+      else {                                                // bloco encerrado
+        const pct=o.cover/len, pctTxt=Math.round(pct*100)+'%';
+        if(atr){ o.st='atrasou'; o.nota='começou '+cronoHHMM(primeiro)+' ('+atr+' min atrasada)'+(pct<0.8?' · cobriu '+pctTxt:''); }
+        else if(pct>=0.8){ o.st='ok'; }
+        else { o.st='parcial'; o.nota='cobriu '+pctTxt+' ('+cronoHHMM(primeiro)+'–'+cronoHHMM(Math.min(ultimo,fim))+')'; }
+      }
+      if(b.shp && b.t==='live' && o.st!=='futuro' && o.st!=='aguardando'){ // tinha que estar no Shopee também, acompanhando a live do TikTok
+        const shpOk = agora<fim ? o.shp.some(l=>l.vivo || l.fim>=agora-tol) : (o.cover>0 ? o.shpCover>=0.6*o.cover : o.shpCover/len>=0.5);
+        if(!shpOk && agora>=ini+tol) o.semShp=true;
+      }
+      return o;
+    });
+    return {t:t,pid:pid,nome:t.nome||'?',cor:(personById(pid)||{}).cor||'#7c5cff',blocos:blocos};
+  });
+  return {dia:dia,ehHoje:ehHoje,agora:agora,tol:tol,ativo:ativo,turnos:turnos,lives:lives};
+}
+
+// Lista de problemas em ordem de gravidade (fora do ar agora > faltou > Shopee faltando > atraso/parcial)
+function cronoProblemas(av){
+  const out=[]; if(!av.ativo) return out;
+  av.turnos.forEach(t=>t.blocos.forEach(o=>{
+    const b=o.b, faixa=cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim);
+    const alvo = b.t==='gravada' ? 'com a live gravada no ar' : ('ao vivo'+(b.shp?' no TikTok + Shopee '+cronoCap(b.shp):''));
+    const add=(g,st,msg)=>out.push({g:g,st:st,t:t,o:o,msg:msg,txt:t.nome+' '+msg});
+    if(o.st==='fora')        add(0,'fora','fora do ar: deveria estar '+alvo+' desde '+cronoHHMM(o.ini)+((o.nota&&o.nota.indexOf('nada no ar')<0)?' · '+o.nota:''));
+    else if(o.st==='faltou') add(1,'faltou','não fez o bloco das '+faixa+(b.t==='gravada'?' (live gravada)':''));
+    else if(o.semShp && o.st==='aovivo') add(2,'shp','está no TikTok, mas o Shopee '+cronoCap(b.shp)+' não está no ar ('+faixa+')');
+    else if(o.semShp)        add(3,'shp','fez a live das '+faixa+' sem o Shopee '+cronoCap(b.shp));
+    else if(o.st==='atrasou'||o.st==='parcial') add(3,o.st,faixa+': '+o.nota);
+  }));
+  return out.sort((a,b)=>a.g-b.g || a.o.ini-b.o.ini);
+}
+
+function renderCronograma(){
+  const el=document.getElementById('cronoTimeline'); if(!el) return;
+  const av=cronoAvaliar(cronoDiaSel()); window.__cronoAv=av;
+  const sub=document.getElementById('cronoSub'), res=document.getElementById('cronoResumo'), pr=document.getElementById('cronoProblemas');
+  const dBR=av.dia.slice(8,10)+'/'+av.dia.slice(5,7);
+  const ontem=menosDias(hojeBR(),1);
+  if(sub) sub.textContent=(av.ehHoje?'hoje':av.dia===ontem?'ontem':'dia')+' · '+dBR+' · tolerância '+av.tol+' min · TikTok e Shopee';
+  try{ const eb=document.getElementById('cronoEditBtn'); if(eb) eb.hidden = localStorage.getItem('ld-role')!=='admin'; }catch(e){}
+  if(!av.ativo){ el.innerHTML='<div class="cm-empty">Sem cronograma neste dia da semana</div>'; if(res) res.innerHTML=''; if(pr) pr.innerHTML=''; renderCronoAlerta(av,[]); return; }
+  let minI=24*60, maxF=0; av.turnos.forEach(t=>t.blocos.forEach(o=>{ if(o.ini!=null&&o.fim!=null){ minI=Math.min(minI,o.ini); maxF=Math.max(maxF,o.fim); } }));
+  if(maxF<=minI){ minI=7*60; maxF=21*60; }
+  minI=Math.floor(minI/60)*60; maxF=Math.ceil(maxF/60)*60; const span=maxF-minI;
+  const pct=m=>((Math.max(minI,Math.min(maxF,m))-minI)/span*100);
+  const ticks=[]; for(let h=minI;h<=maxF;h+=60) ticks.push('<span class="cr-tick'+((h/60)%3===0?' t3':'')+'" style="left:'+pct(h).toFixed(2)+'%">'+(h/60)+'h</span>');
+  const ST={ok:'Cumprido',atrasou:'Atrasou',parcial:'Parcial',faltou:'Faltou',fora:'Fora do ar agora',aovivo:'Ao vivo agora',aguardando:'Aguardando (tolerância)',futuro:'Ainda vai',neutro:''};
+  const rows=av.turnos.map(t=>{
+    const livesB=t.blocos.filter(o=>o.b.t==='live'||o.b.t==='gravada');
+    const feitos=livesB.filter(o=>o.st==='ok'||o.st==='atrasou'||o.st==='aovivo').length;
+    const blks=t.blocos.map(o=>{ if(o.ini==null||o.fim==null||o.fim<=o.ini) return '';
+      const b=o.b;
+      const tipo=b.t==='live'?('Ao vivo'+(b.shp?' + Shopee '+cronoCap(b.shp):'')):b.t==='gravada'?'Live gravada':b.t==='ajuste'?'Ajuste sacolinha':(b.l||'Pausa');
+      const tip=cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim)+' · '+tipo+(ST[o.st]?' · '+ST[o.st]:'')+(o.nota?' · '+o.nota:'')+(o.semShp?' · Shopee '+cronoCap(b.shp)+' faltou':'');
+      const w=pct(o.fim)-pct(o.ini);
+      return '<div class="cr-blk t-'+b.t+' s-'+o.st+(o.semShp?' semshp':'')+'" style="left:'+pct(o.ini).toFixed(2)+'%;width:'+w.toFixed(2)+'%" title="'+ppEsc(tip)+'">'
+        +(w>7?'<span>'+cronoHHMM(o.ini)+'</span>':'')+(b.shp&&b.t==='live'?'<i class="cr-shp"></i>':'')+'</div>';
+    }).join('');
+    // faixa do REAL: lives da pessoa (TikTok), replays nos blocos de gravada e o Shopee das lojas cobradas
+    const minhas=av.lives.filter(l=>l.mk==='tt' && ((t.pid && l.pids.indexOf(t.pid)>=0) || (l.pids.indexOf('__sem__')>=0 && t.blocos.some(o=>o.b.t==='gravada' && l.fim>o.ini && l.ini<o.fim))));
+    const shpLojas=t.blocos.filter(o=>o.b.shp&&o.b.t==='live').map(o=>cronoNorm(o.b.shp));
+    const shps=av.lives.filter(l=>l.mk==='shp' && shpLojas.some(n=>l.loja.indexOf(n)>=0) && t.blocos.some(o=>o.b.shp&&o.b.t==='live'&&l.fim>o.ini&&l.ini<o.fim)); // só o Shopee dos blocos dessa pessoa
+    const seg=(l,cls,plat)=>'<div class="cr-real '+cls+(l.vivo?' vivo':'')+'" style="left:'+pct(l.ini).toFixed(2)+'%;width:'+Math.max(0.6,pct(l.fim)-pct(l.ini)).toFixed(2)+'%" title="'+ppEsc(plat+' · '+l.s.name+' · '+cronoHHMM(l.ini)+'–'+cronoHHMM(l.fim)+(l.vivo?' (ao vivo)':'')+' · '+(l.r.t||'sem título'))+'"></div>';
+    const real=minhas.map(l=>seg(l,'tt','TikTok')).join('')+shps.map(l=>seg(l,'shp','Shopee')).join('');
+    const now=(av.ehHoje && av.agora>=minI && av.agora<=maxF)?'<div class="cr-now" style="left:'+pct(av.agora).toFixed(2)+'%"></div>':'';
+    return '<div class="cr-row"><div class="cr-who"><span class="cr-av" style="background:'+t.cor+'">'+ppEsc(t.nome.charAt(0).toUpperCase())+'</span>'
+      +'<div class="cr-nm">'+ppEsc(t.nome)+(t.pid?'':'<span class="cr-warn" title="Não achei essa pessoa no cadastro da premiação (Pessoas)">?</span>')+'<span class="cr-sts">'+feitos+'/'+livesB.length+' blocos</span></div></div>'
+      +'<div class="cr-track"><div class="cr-lane cr-plan">'+blks+'</div><div class="cr-lane cr-done">'+real+'</div>'+now+'</div></div>';
+  }).join('');
+  el.innerHTML='<div class="cr-axis"><div class="cr-who"></div><div class="cr-track">'+ticks.join('')+'</div></div>'+rows
+    +'<div class="cr-legend"><span><i class="l-ok"></i>cumprido</span><span><i class="l-amb"></i>atrasou/parcial</span><span><i class="l-red"></i>faltou/fora do ar</span><span><i class="l-live"></i>ao vivo agora</span><span><i class="l-fut"></i>ainda vai</span><span><i class="l-real"></i>real TikTok</span><span><i class="l-realshp"></i>real Shopee</span></div>';
+  const todos=[].concat.apply([],av.turnos.map(t=>t.blocos.filter(o=>o.b.t==='live'||o.b.t==='gravada')));
+  const n=k=>todos.filter(o=>o.st===k).length;
+  if(res) res.innerHTML=[['ok',n('ok'),'cumpridos'],['amb',n('atrasou')+n('parcial'),'com atraso'],['red',n('faltou')+n('fora'),'faltaram'],['live',n('aovivo'),'ao vivo agora'],['fut',n('futuro')+n('aguardando'),'ainda vão']]
+    .filter(x=>x[1]>0).map(x=>'<span class="cr-kpi k-'+x[0]+'"><b>'+x[1]+'</b>'+x[2]+'</span>').join('');
+  const probs=cronoProblemas(av);
+  if(pr) pr.innerHTML= probs.length ? probs.map(p=>'<div class="cr-p s-'+p.st+'"><i></i><span><b>'+ppEsc(p.t.nome)+'</b> '+ppEsc(p.msg)+'</span></div>').join('')
+    : (todos.some(o=>o.st!=='futuro'&&o.st!=='aguardando')?'<div class="cr-p s-ok"><i></i><span>Tudo dentro do cronograma até agora</span></div>':'');
+  renderCronoAlerta(av,probs);
+}
+
+// Faixa no topo do painel: só o que está errado AGORA (hoje): alguém fora do ar, ou no TikTok sem o Shopee
+function renderCronoAlerta(av,probs){
+  const el=document.getElementById('cronoAlerta'); if(!el) return;
+  probs=probs||cronoProblemas(av);
+  const agora=av.ehHoje ? probs.filter(p=>p.st==='fora' || (p.st==='shp' && p.g===2)) : [];
+  if(!agora.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const grave=agora.some(p=>p.st==='fora');
+  el.className='cr-alerta '+(grave?'grave':'medio'); el.style.display='';
+  el.innerHTML='<div class="cr-al-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>'
+    +'<div class="cr-al-tx">'+agora.map(p=>'<div><b>'+ppEsc(p.t.nome.toUpperCase())+'</b> '+ppEsc(p.msg)+'</div>').join('')+'</div>'
+    +'<a class="cr-al-go" href="#" onclick="var s=document.querySelector(\'[data-tab-content=&quot;crono&quot;]\'); if(s) s.scrollIntoView({behavior:\'smooth\',block:\'start\'}); return false;">ver cronograma</a>';
+}
+
+// ── Editor (admin): pessoas, blocos, tolerância, dias ──
+const CR_TIPOS=[['live','Ao vivo (TikTok)'],['live_shp','Ao vivo + Shopee Monaco'],['gravada','Live gravada'],['ajuste','Ajuste sacolinha'],['pausa','Pausa / almoço']];
+function crTipoDe(b){ return (b.t==='live'&&b.shp)?'live_shp':(b.t||'live'); }
+function crBlocoHtml(b){
+  b=b||{i:'',f:'',t:'live'};
+  return '<div class="cr-ed-b"><input type="time" class="i" value="'+ppEsc(b.i||'')+'"><span>→</span><input type="time" class="f" value="'+ppEsc(b.f||'')+'">'
+    +'<select class="t">'+CR_TIPOS.map(x=>'<option value="'+x[0]+'"'+(crTipoDe(b)===x[0]?' selected':'')+'>'+x[1]+'</option>').join('')+'</select>'
+    +'<input class="l" placeholder="rótulo (opcional)" value="'+ppEsc(b.l||'')+'"><button class="la-modal-x" title="Tirar bloco" onclick="this.parentNode.remove()">✕</button></div>';
+}
+function crTurnoHtml(t){
+  ensureResp(); const rs=(PREMIO.responsaveis||[]).filter(p=>!p.dona);
+  return '<div class="cr-ed-turno"><div class="cr-ed-head"><input class="cr-ed-nome" value="'+ppEsc(t.nome||'')+'" placeholder="Nome">'
+    +'<select class="cr-ed-pid" title="Quem é no cadastro da premiação"><option value="">casar pelo nome</option>'+rs.map(p=>'<option value="'+p.id+'"'+(t.pid===p.id?' selected':'')+'>'+ppEsc(p.nome)+'</option>').join('')+'</select>'
+    +'<button class="la-modal-x" title="Tirar pessoa" onclick="this.closest(\'.cr-ed-turno\').remove()">✕</button></div>'
+    +'<div class="cr-ed-blocos">'+(t.blocos||[]).map(crBlocoHtml).join('')+'</div>'
+    +'<button class="cr-btn" onclick="cronoAddBloco(this)">+ bloco</button></div>';
+}
+function openCronoModal(){
+  const conf=cronoConf(), m=document.getElementById('cronoModal'), body=document.getElementById('cronoBody'); if(!m||!body) return;
+  const DIAS=['dom','seg','ter','qua','qui','sex','sáb'];
+  body.innerHTML='<div class="cr-ed-top"><label>Tolerância <input type="number" id="crTol" min="0" max="60" value="'+(+conf.tol||10)+'"> min</label>'
+    +'<div class="cr-ed-dias">'+DIAS.map((d,i)=>'<label><input type="checkbox" data-d="'+i+'"'+((conf.dias||[]).indexOf(i)>=0?' checked':'')+'>'+d+'</label>').join('')+'</div></div>'
+    +'<div id="crTurnos">'+(conf.turnos||[]).map(crTurnoHtml).join('')+'</div>'
+    +'<div class="cr-ed-acts"><button class="cr-btn" onclick="cronoAddTurno()">+ pessoa</button><button class="cr-btn" onclick="cronoRestaurar()">Restaurar planilha</button><button class="cr-btn primary" onclick="cronoSalvar()">Salvar</button></div>';
+  m.style.display='flex';
+}
+function cronoAddBloco(btn){ btn.previousElementSibling.insertAdjacentHTML('beforeend',crBlocoHtml(null)); }
+function cronoAddTurno(){ document.getElementById('crTurnos').insertAdjacentHTML('beforeend',crTurnoHtml({nome:'',pid:'',blocos:[{i:'',f:'',t:'live'}]})); }
+function cronoSalvar(){
+  const body=document.getElementById('cronoBody'); if(!body) return;
+  const conf={_v:1, tol:Math.max(0,Math.min(60,parseInt(document.getElementById('crTol').value,10)||0)),
+    dias:[...body.querySelectorAll('.cr-ed-dias input:checked')].map(c=>+c.dataset.d), turnos:[]};
+  let erro='';
+  body.querySelectorAll('.cr-ed-turno').forEach(tu=>{
+    const nome=tu.querySelector('.cr-ed-nome').value.trim(); if(!nome) return;
+    const blocos=[];
+    tu.querySelectorAll('.cr-ed-b').forEach(bl=>{
+      const i=bl.querySelector('.i').value, f=bl.querySelector('.f').value, tp=bl.querySelector('.t').value, l=bl.querySelector('.l').value.trim();
+      if(!i||!f) return;
+      if(cronoMin(f)<=cronoMin(i)) erro=nome+': bloco '+i+'–'+f+' termina antes de começar';
+      const b={i:i,f:f,t:tp==='live_shp'?'live':tp}; if(tp==='live_shp') b.shp='monaco'; if(l) b.l=l;
+      blocos.push(b);
+    });
+    blocos.sort((a,b)=>cronoMin(a.i)-cronoMin(b.i));
+    conf.turnos.push({nome:nome,pid:tu.querySelector('.cr-ed-pid').value||'',blocos:blocos});
+  });
+  if(erro){ alert(erro); return; }
+  PREMIO.cronograma=conf; savePremioOnly(true);
+  document.getElementById('cronoModal').style.display='none';
+  renderCronograma();
+}
+function cronoRestaurar(){ if(!confirm('Voltar pro cronograma da planilha (HORARIOS LIVE)? Isso apaga as edições.')) return; PREMIO.cronograma=cronoDefault(); savePremioOnly(true); openCronoModal(); renderCronograma(); }
+// o relógio anda mesmo sem dado novo: re-avalia a cada minuto (fora do ar / tolerância)
+setInterval(function(){ try{ if(document.getElementById('cronoTimeline') && ((window.STORES_ALL||STORES||[]).length)) renderCronograma(); }catch(e){} }, 60000);
+
+// ════════════════════════════════════════════════════════
 // ABA LOJAS — comparativo entre todas
 // ════════════════════════════════════════════════════════
 function renderLojasTab(){
@@ -4236,7 +4555,7 @@ function applyAccent(hex){
 function toggleAccentPop(e){ if(e) e.stopPropagation(); const pop=document.getElementById('accentPop'); if(!pop) return; renderAccentSwatches(); pop.classList.toggle('open'); }
 document.addEventListener('click',function(e){ const pop=document.getElementById('accentPop'); const btn=document.getElementById('accentBtn'); if(pop&&pop.classList.contains('open')&&!pop.contains(e.target)&&e.target!==btn){ pop.classList.remove('open'); } });
 
-const SEC_KEYS=['visao','lojas','pessoas','dia','semana','quando','oque','performance','historico','comissao'];
+const SEC_KEYS=['visao','lojas','pessoas','crono','dia','semana','quando','oque','performance','historico','comissao'];
 function secParent(){ const el=document.querySelector('[data-tab-content="visao"]'); return el?el.parentNode:null; }
 function secEl(p,k){ return p?p.querySelector(':scope > [data-tab-content="'+k+'"]'):null; }
 function reportSections(){ const p=secParent(); if(!p) return []; return [].filter.call(p.children, function(el){ return el.getAttribute && SEC_KEYS.indexOf(el.getAttribute('data-tab-content')||'')>=0; }); }
@@ -4317,7 +4636,7 @@ function edInitSecTools(){
    - Lote 1: ordem das seções. hidden[] já existe no formato (UI vem no L2). */
 var LiveLayout = (function(){
   var KEYS = (typeof SEC_KEYS!=='undefined' && SEC_KEYS.length) ? SEC_KEYS.slice() : ['visao','lojas','dia','semana','quando','oque','performance','historico'];
-  var LABELS = { visao:'Visão Geral', dia:'Por Dia', semana:'Por Semana', quando:'Quando', oque:'O que vende', performance:'Performance', historico:'Histórico', lojas:'Lojas', pessoas:'Por Pessoa', comissao:'Premiação' };
+  var LABELS = { visao:'Visão Geral', dia:'Por Dia', semana:'Por Semana', quando:'Quando', oque:'O que vende', performance:'Performance', historico:'Histórico', lojas:'Lojas', pessoas:'Por Pessoa', crono:'Cronograma', comissao:'Premiação' };
   var CACHE = 'ld-layout';
   function dev(){ try{ return window.matchMedia('(max-width: 820px)').matches ? 'mobile' : 'pc'; }catch(e){ return 'pc'; } }
   function normProf(p){
@@ -5160,7 +5479,7 @@ document.getElementById('commModal')?.addEventListener('click', (e) => {
 // ════════════════════════════════════════════════════════
 // TABS
 // ════════════════════════════════════════════════════════
-var TUDO_SECTIONS = [['visao','Visão Geral'],['lojas','Lojas'],['pessoas','Por Pessoa'],['dia','Por Dia'],['semana','Por Semana'],['quando','Quando'],['oque','O que vende'],['performance','Performance'],['historico','Histórico'],['comissao','Premiação']];
+var TUDO_SECTIONS = [['visao','Visão Geral'],['lojas','Lojas'],['pessoas','Por Pessoa'],['crono','Cronograma'],['dia','Por Dia'],['semana','Por Semana'],['quando','Quando'],['oque','O que vende'],['performance','Performance'],['historico','Histórico'],['comissao','Premiação']];
 var _tudoBuilt = false;
 function buildTudoNav(){
   if(_tudoBuilt) return;
@@ -6487,7 +6806,8 @@ try{ setFilter({type:'today'}); }catch(e){}
       historico:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/>',
       lojas:'<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>',
       pessoas:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
-      comissao:'<path d="M12 2l2.4 6.2L21 9l-5 4 1.4 7L12 16l-5.4 4L8 13 3 9l6.6-.8z"/>'
+      crono:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8.5 15l2.5 2.5 4.5-5"/>',
+    comissao:'<path d="M12 2l2.4 6.2L21 9l-5 4 1.4 7L12 16l-5.4 4L8 13 3 9l6.6-.8z"/>'
     };
     function svg(k){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(IC[k]||IC.visao)+'</svg>'; }
     var items=SECS.map(function(p){ return '<div class="ld-i" data-go="'+p[0]+'">'+svg(p[0])+'<span>'+p[1]+'</span></div>'; }).join('');
@@ -6722,9 +7042,10 @@ try{ setFilter({type:'today'}); }catch(e){}
     historico:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/>',
     lojas:'<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>',
       pessoas:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
+    crono:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8.5 15l2.5 2.5 4.5-5"/>',
     comissao:'<path d="M12 2l2.4 6.2L21 9l-5 4 1.4 7L12 16l-5.4 4L8 13 3 9l6.6-.8z"/>'
   };
-  var NM={visao:'Visão',dia:'Por Dia',semana:'Semana',quando:'Quando',oque:'Produtos',performance:'Perform.',historico:'Histórico',lojas:'Lojas',pessoas:'Pessoas',comissao:'Prêmios'};
+  var NM={visao:'Visão',dia:'Por Dia',semana:'Semana',quando:'Quando',oque:'Produtos',performance:'Perform.',historico:'Histórico',lojas:'Lojas',pessoas:'Pessoas',crono:'Agenda',comissao:'Prêmios'};
   function svg(k){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(IC[k]||IC.visao)+'</svg>'; }
   var nav=null;
   function secoes(){ return document.querySelectorAll('.tab-content[data-tab-content]'); }
