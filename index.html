@@ -1163,6 +1163,13 @@ body.ed-mobile .cm-hero-stats{grid-template-columns:1fr 1fr}
 .pmix{margin-top:2px}
 .pmix span{display:block;text-align:right;font-size:11px;color:var(--text-2);font-weight:600;line-height:1.55;white-space:nowrap;font-variant-numeric:tabular-nums}
 .lvtag img{width:11px;height:11px;border-radius:3px;margin-right:1px;display:inline-block;vertical-align:-2px}
+a.lvtag,.lvtag a{color:inherit;text-decoration:none}
+a.lvtag,.lvtag a.lvgo{cursor:pointer}
+a.lvtag:hover{background:rgba(255,69,58,.24);border-color:rgba(255,69,58,.65)}
+.lvtag a.lvgo{display:inline-flex;align-items:center;gap:5px;border-radius:99px}
+.lvtag a.lvgo:hover{filter:brightness(1.35)}
+.lvtag a.lvgo:hover img{transform:scale(1.18)}
+@media(max-width:640px){#ovShare a.lvtag,#ovShare .lvtag a.lvgo{min-height:18px;min-width:18px;justify-content:center}}
 .mkb.fb{font-size:8.5px;font-weight:800;letter-spacing:.06em;border-radius:6px;padding:2px 6px;background:rgba(238,77,45,.14);color:#ff8a5c;border:1px solid rgba(238,77,45,.40)}
 .ss-mkt{display:flex;gap:6px;padding:8px 12px 4px}
 .ss-mkt button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;border-radius:9px;border:1px solid var(--border-2);background:transparent;color:var(--text-3);cursor:pointer}
@@ -2039,17 +2046,74 @@ function setMkt(m){
     document.addEventListener('click', function(){ sel.classList.remove('open'); });
   }
 })();
+// ── link do selo AO VIVO ──────────────────────────────────────────────────
+// Conta de cada loja no TikTok. A chave é o id da loja no robô (o mesmo "cloudLoja" de tts_lives:<id>).
+// Preencher SEM o "@". Vazio = o selo AO VIVO continua como sempre, só sem link.
+// A live da Shopee não precisa de conta: o robô já grava o id da sessão (aoVivoShp) e o link é montado por ele.
+var LIVE_CONTAS = {
+  'aura-casa':      { tiktok: 'aurahome242' },      // confirmados no Gerenciador de LIVE em 16/09/2026
+  'stylo-decor':    { tiktok: 'stylodecorecasa' },
+  'casa-flow':      { tiktok: 'casaflow24' },
+  'studio-minimal': { tiktok: 'studiominimal24' },
+  'house-glow':     { tiktok: 'houseglow246' },
+  'linea':          { tiktok: 'lineahome5' },
+  'monaco':         { tiktok: '' },                 // ↓ faltam: preencher quando tiver o @
+  'bellini':        { tiktok: '' },
+  'mania-d-casa':   { tiktok: '' },
+  'petit-store':    { tiktok: '' },
+  'bold':           { tiktok: '' },
+  'decor-up':       { tiktok: '' },
+  'fast':           { tiktok: '' },
+  'inspire-home':   { tiktok: '' },
+  'lar-studio':     { tiktok: '' },
+  'mood':           { tiktok: '' },
+  'tokdicasa':      { tiktok: '' },
+  'yasmin':         { tiktok: '' },
+  'bellas-home':    { tiktok: '' },
+  'edge-decor':     { tiktok: '' },
+  'prime-nest':     { tiktok: '' },
+  'urban-decor':    { tiktok: '' }
+};
+function liveUrls(s){
+  // {tt, shp}: link da live em cada plataforma, ou null quando não dá pra montar
+  var out = { tt:null, shp:null };
+  if(!s) return out;
+  var doze = 12*60*1000;
+  var c = LIVE_CONTAS[s.cloudLoja] || {};
+  var conta = String(c.tiktok || '').replace(/^@/, '').trim();
+  // TikTok: só quando a live do TikTok está no ar (loja antiga sem ultimoFimTT: vale o ultimoFim geral)
+  var ttVivo = s.ultimoFimTT ? (Date.now()-s.ultimoFimTT < doze) : (!s.ultimoFimSHP && lojaAoVivo(s));
+  if(conta && ttVivo) out.tt = 'https://www.tiktok.com/@'+encodeURIComponent(conta)+'/live';
+  var shpVivo = (s.ultimoFimSHP||0) && Date.now()-s.ultimoFimSHP < doze;
+  if(shpVivo && s.aoVivoShp) out.shp = 'https://live.shopee.com.br/share?from=live&session='+encodeURIComponent(s.aoVivoShp);
+  return out;
+}
+function lvLinkAttrs(url, nome, plat, cls){
+  return 'class="'+cls+'" href="'+url+'" target="_blank" rel="noopener" title="abrir a live de '+nome+' no '+plat+'" onclick="event.stopPropagation()"';
+}
 function lvTagHtml(s){
   // sem contagem de espectadores: o TikTok só dá o ACUMULADO, não o simultâneo — Gabriel mandou esquecer
   if(!lojaAoVivo(s))return '';
-  var ic = '';
+  var u = liveUrls(s), nome = (s && s.name) || 'loja';
+  var doze = 12*60*1000, ds = [];
   if(temMix()){
-    var doze = 12*60*1000, ds = [];
-    if((s.ultimoFimTT||0) && Date.now()-s.ultimoFimTT < doze) ds.push('tiktok.com');
-    if((s.ultimoFimSHP||0) && Date.now()-s.ultimoFimSHP < doze) ds.push('shopee.com.br');
-    ic = ds.map(function(d){ return '<img src="https://www.google.com/s2/favicons?domain='+d+'&sz=64" alt="">'; }).join('');
+    if((s.ultimoFimTT||0) && Date.now()-s.ultimoFimTT < doze) ds.push({ dom:'tiktok.com', url:u.tt, plat:'TikTok' });
+    if((s.ultimoFimSHP||0) && Date.now()-s.ultimoFimSHP < doze) ds.push({ dom:'shopee.com.br', url:u.shp, plat:'Shopee' });
   }
-  return '<span class="lvtag" title="Conta transmitindo agora (dado do robô, até ~6 min)"><span class="lvdot"></span>'+ic+'<span class="lvtxt">AO VIVO</span></span>';
+  var img = function(d){ return '<img src="https://www.google.com/s2/favicons?domain='+d.dom+'&sz=64" alt="'+d.plat+'">'; };
+  var tit = 'Conta transmitindo agora (dado do robô, até ~6 min)';
+  var principal = u.tt || u.shp, platP = u.tt ? 'TikTok' : 'Shopee';
+  var urls = ds.filter(function(d){ return d.url; });
+  if(urls.length >= 2){
+    // ao vivo nas 2 plataformas com link nas 2: cada ícone abre a sua; a bolinha e o texto abrem a principal (TikTok)
+    var pm = function(inner){ return '<a '+lvLinkAttrs(principal, nome, platP, 'lvgo')+'>'+inner+'</a>'; };
+    return '<span class="lvtag lvlink" title="'+tit+'">'+pm('<span class="lvdot"></span>')
+      + ds.map(function(d){ return d.url ? '<a '+lvLinkAttrs(d.url, nome, d.plat, 'lvgo')+'>'+img(d)+'</a>' : img(d); }).join('')
+      + pm('<span class="lvtxt">AO VIVO</span>')+'</span>';
+  }
+  var miolo = '<span class="lvdot"></span>'+ds.map(img).join('')+'<span class="lvtxt">AO VIVO</span>';
+  if(!principal) return '<span class="lvtag" title="'+tit+'">'+miolo+'</span>'; // sem @ cadastrado: igual a antes
+  return '<a '+lvLinkAttrs(principal, nome, platP, 'lvtag lvlink')+'>'+miolo+'</a>';
 }
 function pessoasAoVivoIds(){
   var out = new Set();
@@ -2089,8 +2153,13 @@ function renderStoreSelector(){
 
   // Caso especial: "Todas as lojas"
   if(CURRENT_STORE_ID==='_all_'){
-    var _lv = STORES.filter(lojaAoVivo).length;
-    document.getElementById('ssCurrentName').innerHTML = 'Todas' + (_lv?' <span class="lvtag"><span class="lvdot"></span>'+_lv+' AO VIVO</span>':'');
+    var _lvs = STORES.filter(lojaAoVivo), _lv = _lvs.length, _lvHtml = '';
+    if(_lv){
+      var _u = _lv===1 ? liveUrls(_lvs[0]) : { tt:null, shp:null }, _p = _u.tt || _u.shp;
+      var _m = '<span class="lvdot"></span>'+_lv+' AO VIVO';
+      _lvHtml = _p ? ' <a '+lvLinkAttrs(_p, _lvs[0].name, _u.tt?'TikTok':'Shopee', 'lvtag lvlink')+'>'+_m+'</a>' : ' <span class="lvtag">'+_m+'</span>';
+    }
+    document.getElementById('ssCurrentName').innerHTML = 'Todas' + _lvHtml;
     const sw = document.getElementById('ssSwatch');
     sw.style.cssText='';
     sw.style.background = 'var(--grad, linear-gradient(135deg, var(--accent), #ec4899))';
@@ -3034,7 +3103,7 @@ function renderOvExtras(){
     try{
       const rows = STORES.map(s=>{
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
-        return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews,
+        return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, cloudLoja:s.cloudLoja, aoVivoShp:s.aoVivoShp,
                  gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
                  gmvTT: rs.reduce((a,r)=>a+(((r.mk||'tt')==='tt')?r.g:0),0),
                  gmvSHP: rs.reduce((a,r)=>a+((r.mk==='shp')?r.g:0),0),
@@ -4056,7 +4125,7 @@ function renderLojasTab(){
     const follows = filtered.reduce((sum,r)=>sum+r.nf,0);
     const dias = new Set(filtered.map(r=>r.d)).size;
     const min = filtered.reduce((sum,r)=>sum+(r.duE!=null?r.duE:(r.du||0)),0);   // du em MINUTOS
-    return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, lives:filtered.length, gmv, items, follows, dias, min,
+    return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, cloudLoja:s.cloudLoja, aoVivoShp:s.aoVivoShp, lives:filtered.length, gmv, items, follows, dias, min,
              gmvHora: min>0?gmv/(min/60):0, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
   }).sort((a,b)=>b.gmv-a.gmv);
   const totalGmv = stats.reduce((s,x)=>s+x.gmv,0);
@@ -6992,7 +7061,7 @@ try{ setFilter({type:'today'}); }catch(e){}
       var lojas = ordem.map(function(nome, i){
         var g = porLoja[nome];
         var m = meta[nome] || {};
-        var regs = [], mkts = {}, fimTT = 0, fimSHP = 0, vivos = [], vivoViews = 0;
+        var regs = [], mkts = {}, fimTT = 0, fimSHP = 0, vivos = [], vivosShp = [], vivoViews = 0;
         function soma(lista, mk){
           if(!lista) return;
           mkts[mk] = true;
@@ -7000,7 +7069,7 @@ try{ setFilter({type:'today'}); }catch(e){}
             var ft = +new Date(lista[li].finished_at || 0);
             if(mk==='tt' && ft>fimTT) fimTT = ft;
             if(mk==='shp' && ft>fimSHP) fimSHP = ft;
-            if(ft && Date.now()-ft < 12*60*1000){ vivos.push(lista[li].room_id); vivoViews = +lista[li].views || vivoViews; }
+            if(ft && Date.now()-ft < 12*60*1000){ vivos.push(lista[li].room_id); if(mk==='shp') vivosShp.push(lista[li].room_id); vivoViews = +lista[li].views || vivoViews; }
             var r = regFromLive(lista[li]); r.mk = mk; regs.push(r);
           }
         }
@@ -7022,6 +7091,7 @@ try{ setFilter({type:'today'}); }catch(e){}
           aoVivoViews: vivoViews,
           aoVivoRoom: vivos[0] || null,
           aoVivoRooms: vivos,
+          aoVivoShp: vivosShp[0] || null,   // sessão da Shopee no ar (room_id = sessionId) → link da live
           regs: regs
         };
       });
