@@ -37,6 +37,47 @@ function parseLive(r, loja) {
   };
 }
 
+// Procura o @ da conta em texto solto (JSON de API, storage, DOM).
+// Só aceita o que tem cara de handle do TikTok: 2-24 chars, letras/números/._
+const HANDLE_RE = /(?:"(?:unique_id|uniqueId|handle|user_name|username|account_name|creator_unique_id)"\s*:\s*"|(?<![A-Za-z0-9._-])@)([a-zA-Z0-9._]{2,24})\b/g;
+const HANDLE_NAO = new Set(['gmail', 'hotmail', 'outlook', 'com', 'br', 'tiktok', 'shop', 'seller', 'null', 'undefined', 'example']);
+function pescaHandle(texto, destino) {
+  if (!texto) return;
+  let m;
+  HANDLE_RE.lastIndex = 0;
+  while ((m = HANDLE_RE.exec(String(texto)))) {
+    const v = m[1];
+    if (!v || HANDLE_NAO.has(v.toLowerCase())) continue;
+    if (/^\d+$/.test(v)) continue;          // id numérico não é @
+    if (!/[a-zA-Z]/.test(v)) continue;
+    if (/\.(com|br|net|org|io)$/i.test(v) || /^\.|\.$/.test(v)) continue;  // e-mail/domínio não é @
+    destino.add(v);
+    if (destino.size > 6) return;           // já deu, não varre o resto
+  }
+}
+
+// Guarda o @ em tts_meta:<loja> sem apagar name/color/logo que o painel grava lá.
+async function gravaHandle(loja, handle) {
+  if (!handle) return false;
+  const key = 'tts_meta:' + loja;
+  let atual = {};
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/livedash_state?key=eq.' + encodeURIComponent(key) + '&select=data', {
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
+    });
+    if (r.ok) { const j = await r.json(); if (j && j[0] && j[0].data) atual = j[0].data; }
+  } catch (e) {}
+  if (atual.tiktok === handle) return false;          // já está igual: não escreve à toa
+  if (atual.tiktokManual) return false;               // @ ajustado na mão manda mais que o automático
+  const novo = Object.assign({}, atual, { tiktok: handle, tiktokEm: new Date().toISOString() });
+  const r2 = await fetch(SB_URL + '/rest/v1/livedash_state', {
+    method: 'POST',
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify({ key, data: novo, updated_at: new Date().toISOString() }),
+  });
+  return r2.status < 300;
+}
+
 async function coletarLoja(loja, storageState) {
   // Flags de economia de memoria: o worker Starter do Render tem 512MB
   const browser = await chromium.launch({ headless: true, args: FLAGS });
@@ -53,8 +94,19 @@ async function coletarLoja(loja, storageState) {
   });
 
   let signedUrl = null;
+  // o @ da conta costuma aparecer nas chamadas do Seller Center (unique_id/handle/username)
+  const handlesRede = new Set();
   page.on('request', (req) => {
     if (req.url().includes('detail_performance/list') && !signedUrl) signedUrl = req.url();
+    try { pescaHandle(req.url(), handlesRede); } catch (e) {}
+  });
+  page.on('response', async (res) => {
+    try {
+      const ct = String(res.headers()['content-type'] || '');
+      if (!/json/i.test(ct)) return;
+      const t = await res.text();
+      if (t && t.length < 400000) pescaHandle(t, handlesRede);
+    } catch (e) {}
   });
 
   await page.goto(COMPASS, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {});
@@ -82,7 +134,23 @@ async function coletarLoja(loja, storageState) {
     for (const x of rooms) { if (!vistos.has(x.room_id)) { vistos.add(x.room_id); all.push(parseLive(x, loja)); } }
     p++;
   }
-  return all;
+  // @ da conta: rede -> storage/DOM da própria página (tudo best-effort)
+  let handle = [...handlesRede][0] || null;
+  if (!handle) {
+    try {
+      const doPage = await page.evaluate(() => {
+        const txt = [];
+        try { for (const k of Object.keys(localStorage)) { const v = localStorage.getItem(k) || ''; if (v.length < 200000) txt.push(k + '=' + v); } } catch (e) {}
+        try { for (const k of Object.keys(sessionStorage)) { const v = sessionStorage.getItem(k) || ''; if (v.length < 200000) txt.push(k + '=' + v); } } catch (e) {}
+        try { txt.push(document.body.innerText.slice(0, 20000)); } catch (e) {}
+        return txt.join('\n');
+      });
+      const achados = new Set();
+      pescaHandle(doPage, achados);
+      handle = [...achados][0] || null;
+    } catch (e) {}
+  }
+  return { lives: all, handle };
   } finally {
     await browser.close().catch(() => {});
   }
@@ -319,10 +387,13 @@ async function lerSessoes() {
         console.log('  OK shopee', nome, '-> coletadas', res.lives.length, '(capturas ' + res.capturas + ')',
           '| acumulado', m.total, '(' + m.novas + ' novas, ' + m.atualizadas + ' atualizadas)');
       } else {
-        const lives = await coletarLoja(nome, c.storageState);
+        const col = await coletarLoja(nome, c.storageState);
+        const lives = col.lives || col;                    // compatível com o retorno antigo
         const m = await gravarSupabase('tts_lives', nome, lives);
+        let ah = '';
+        try { if (col.handle && await gravaHandle(nome, col.handle)) ah = ' | @' + col.handle + ' (salvo)'; else if (col.handle) ah = ' | @' + col.handle; } catch (e) {}
         console.log('  OK', nome, '-> coletadas', lives.length, '| acumulado', m.total,
-          '(' + m.novas + ' novas, ' + m.atualizadas + ' atualizadas, ' + m.mantidas + ' guardadas)');
+          '(' + m.novas + ' novas, ' + m.atualizadas + ' atualizadas, ' + m.mantidas + ' guardadas)' + ah);
       }
     } catch (e) {
       console.log('  FALHOU', c.loja, '->', e.message.slice(0, 120));

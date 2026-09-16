@@ -2080,7 +2080,9 @@ function liveUrls(s){
   if(!s) return out;
   var doze = 12*60*1000;
   var c = LIVE_CONTAS[s.cloudLoja] || {};
-  var conta = String(c.tiktok || '').replace(/^@/, '').trim();
+  // 1º o @ que o robô achou sozinho no painel do TikTok (tts_meta:<loja>.tiktok);
+  // 2º o mapa fixo aqui embaixo, preenchido na mão
+  var conta = String(s.ttUser || c.tiktok || '').replace(/^@/, '').trim();
   // TikTok: só quando a live do TikTok está no ar (loja antiga sem ultimoFimTT: vale o ultimoFim geral)
   var ttVivo = s.ultimoFimTT ? (Date.now()-s.ultimoFimTT < doze) : (!s.ultimoFimSHP && lojaAoVivo(s));
   if(conta && ttVivo) out.tt = 'https://www.tiktok.com/@'+encodeURIComponent(conta)+'/live';
@@ -3103,7 +3105,7 @@ function renderOvExtras(){
     try{
       const rows = STORES.map(s=>{
         const rs = filterRegs(s.regs||[], CURRENT_FILTER);
-        return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, cloudLoja:s.cloudLoja, aoVivoShp:s.aoVivoShp,
+        return { name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, cloudLoja:s.cloudLoja, aoVivoShp:s.aoVivoShp, ttUser:s.ttUser,
                  gmv: rs.reduce((a,r)=>a+r.g,0), lives: rs.length,
                  gmvTT: rs.reduce((a,r)=>a+(((r.mk||'tt')==='tt')?r.g:0),0),
                  gmvSHP: rs.reduce((a,r)=>a+((r.mk==='shp')?r.g:0),0),
@@ -4125,7 +4127,7 @@ function renderLojasTab(){
     const follows = filtered.reduce((sum,r)=>sum+r.nf,0);
     const dias = new Set(filtered.map(r=>r.d)).size;
     const min = filtered.reduce((sum,r)=>sum+(r.duE!=null?r.duE:(r.du||0)),0);   // du em MINUTOS
-    return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, cloudLoja:s.cloudLoja, aoVivoShp:s.aoVivoShp, lives:filtered.length, gmv, items, follows, dias, min,
+    return { id:s.id, name:s.name, color:s.color, logo:s.logo, mkt:s.mkt, mkts:s.mkts, ultimoFim:s.ultimoFim, ultimoFimTT:s.ultimoFimTT, ultimoFimSHP:s.ultimoFimSHP, aoVivoViews:s.aoVivoViews, cloudLoja:s.cloudLoja, aoVivoShp:s.aoVivoShp, ttUser:s.ttUser, lives:filtered.length, gmv, items, follows, dias, min,
              gmvHora: min>0?gmv/(min/60):0, gmvLive: filtered.length>0?gmv/filtered.length:0, filtered };
   }).sort((a,b)=>b.gmv-a.gmv);
   const totalGmv = stats.reduce((s,x)=>s+x.gmv,0);
@@ -7083,6 +7085,7 @@ try{ setFilter({type:'today'}); }catch(e){}
           mkts: mkts,
           mkt: (g.shp && !g.tt) ? 'shp' : 'tt',
           name: m.name || nome.toUpperCase(),
+          ttUser: m.tiktok || '',            // @ descoberto pelo robô (tts_meta)
           color: m.color || PAL[i % PAL.length],
           logo: m.logo || undefined,
           ultimoFim: Math.max(fimTT, fimSHP),
