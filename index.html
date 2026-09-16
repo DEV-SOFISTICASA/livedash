@@ -624,7 +624,7 @@ html[data-theme="light"] .cr-alerta.grave{color:#7f1d1d}html[data-theme="light"]
 .cr-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:10.5px;color:var(--text-3)}
 .cr-legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .cr-legend i{display:inline-block;width:12px;height:8px;border-radius:3px;box-sizing:border-box}
-.cr-legend .l-ok{background:#22c55e}.cr-legend .l-amb{background:#f59e0b}.cr-legend .l-red{background:#ef4444}.cr-legend .l-live{background:var(--accent)}.cr-legend .l-fut{border:1px dashed var(--accent)}.cr-legend .l-real{background:var(--accent);height:5px}.cr-legend .l-realshp{background:#ee4d2d;height:5px}
+.cr-legend .l-ok{background:#22c55e}.cr-legend .l-amb{background:#f59e0b}.cr-legend .l-red{background:#ef4444}.cr-legend .l-live{background:var(--accent)}.cr-legend .l-fut{border:1px dashed var(--accent)}.cr-legend .l-real{background:var(--accent);height:5px}.cr-legend .l-realshp{background:#ee4d2d;height:5px}.cr-legend .l-mon{background:#ee4d2d;width:8px;height:8px;border-radius:50%;border:1px solid #fff}
 .cr-probs{margin-top:14px;display:flex;flex-direction:column;gap:6px}
 .cr-p{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);font-size:12.5px;color:var(--text-2)}
 .cr-p b{color:var(--text)}
@@ -3774,7 +3774,8 @@ function renderPorPessoa(){
 // Bloco: {i:'07:30', f:'09:00', t:'live'|'gravada'|'ajuste'|'pausa', shp:'monaco', l:'Almoço'}
 // ════════════════════════════════════════════════════════
 function cronoDefault(){
-  // Seed = planilha "HORARIOS LIVE.xlsx" (15/09/2026): 3 turnos, "SH MON" = a mesma live também no Shopee da Monaco
+  // Seed = planilha "HORARIOS LIVE.xlsx" (15/09/2026): 3 turnos. TODA live ao vivo = TikTok + Shopee;
+  // "SH MON" (shp:'monaco') = quem está com a conta Shopee da MONACO naquele horário (a outra abre o Shopee em outra loja).
   const L=(i,f,shp)=>({i:i,f:f,t:'live',shp:shp||''}), G=(i,f)=>({i:i,f:f,t:'gravada'}),
         A=(i,f)=>({i:i,f:f,t:'ajuste'}), P=(i,f,l)=>({i:i,f:f,t:'pausa',l:l||''});
   return { _v:1, tol:10, dias:[1,2,3,4,5,6], turnos:[
@@ -3825,6 +3826,7 @@ function cronoAvaliar(dia){
   }); });
   const dow=new Date(dia+'T12:00:00').getDay();
   const ativo=(conf.dias||[1,2,3,4,5,6]).indexOf(dow)>=0;
+  const monBlocks=[]; (conf.turnos||[]).forEach(t2=>(t2.blocos||[]).forEach(b2=>{ if(b2.t==='live'&&b2.shp){ const i2=cronoMin(b2.i), f2=cronoMin(b2.f); if(i2!=null&&f2!=null) monBlocks.push({t:t2,ini:i2,fim:f2,loja:cronoNorm(b2.shp)}); } }));
   const turnos=(conf.turnos||[]).map(t=>{
     const pid=cronoPid(t);
     const blocos=(t.blocos||[]).map(b=>{
@@ -3835,9 +3837,17 @@ function cronoAvaliar(dia){
       const quem = b.t==='gravada' ? (l=>l.pids.indexOf('__sem__')>=0) : (l=>!!pid && l.pids.indexOf(pid)>=0);
       o.tt=lives.filter(l=>l.mk==='tt' && quem(l) && l.fim>ini && l.ini<fim);
       o.cover=cronoUniao(o.tt.map(l=>[Math.max(l.ini,ini),Math.min(l.fim,fim)]));
-      if(b.shp && b.t==='live'){
-        o.shp=lives.filter(l=>l.mk==='shp' && l.loja.indexOf(cronoNorm(b.shp))>=0 && l.fim>ini && l.ini<fim);
-        o.shpCover=cronoUniao(o.shp.map(l=>[Math.max(l.ini,ini),Math.min(l.fim,fim)]));
+      if(b.t==='live'){ // Shopee da pessoa: 1º pela sigla no título; sem sigla → loja marcada (Monaco) ou outra loja Shopee livre
+        const shpAll=lives.filter(l=>l.mk==='shp' && l.fim>ini && l.ini<fim);
+        let cand=shpAll.filter(l=>!!pid && l.pids.indexOf(pid)>=0);
+        if(!cand.length){
+          const semDono=l=>!l.pids.some(x=>x!=='__semshp__'&&x!=='__sem__');
+          if(b.shp) cand=shpAll.filter(l=>l.loja.indexOf(cronoNorm(b.shp))>=0 && semDono(l));
+          else { const presas=monBlocks.filter(m=>m.t!==t && m.fim>ini && m.ini<fim).map(m=>m.loja);
+            cand=shpAll.filter(l=>semDono(l) && !presas.some(n=>l.loja.indexOf(n)>=0)); }
+        }
+        o.shp=cand; o.shpCover=cronoUniao(cand.map(l=>[Math.max(l.ini,ini),Math.min(l.fim,fim)]));
+        if(b.shp && cand.length && !cand.some(l=>l.loja.indexOf(cronoNorm(b.shp))>=0)) o.shpOutra=cand.map(l=>l.s.name).filter((v,i,a)=>a.indexOf(v)===i).join(', '); // era pra segurar a Monaco
       }
       const primeiro=o.tt.length?Math.min.apply(null,o.tt.map(l=>l.ini)):null;
       const ultimo=o.tt.length?Math.max.apply(null,o.tt.map(l=>l.fim)):null;
@@ -3861,7 +3871,7 @@ function cronoAvaliar(dia){
         else if(pct>=0.8){ o.st='ok'; }
         else { o.st='parcial'; o.nota='cobriu '+pctTxt+' ('+cronoHHMM(primeiro)+'–'+cronoHHMM(Math.min(ultimo,fim))+')'; }
       }
-      if(b.shp && b.t==='live' && o.st!=='futuro' && o.st!=='aguardando'){ // tinha que estar no Shopee também, acompanhando a live do TikTok
+      if(b.t==='live' && o.st!=='futuro' && o.st!=='aguardando'){ // toda live ao vivo tem que estar no Shopee também, acompanhando o TikTok
         const shpOk = agora<fim ? o.shp.some(l=>l.vivo || l.fim>=agora-tol) : (o.cover>0 ? o.shpCover>=0.6*o.cover : o.shpCover/len>=0.5);
         if(!shpOk && agora>=ini+tol) o.semShp=true;
       }
@@ -3877,13 +3887,14 @@ function cronoProblemas(av){
   const out=[]; if(!av.ativo) return out;
   av.turnos.forEach(t=>t.blocos.forEach(o=>{
     const b=o.b, faixa=cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim);
-    const alvo = b.t==='gravada' ? 'com a live gravada no ar' : ('ao vivo'+(b.shp?' no TikTok + Shopee '+cronoCap(b.shp):''));
+    const alvo = b.t==='gravada' ? 'com a live gravada no ar' : ('ao vivo no TikTok + Shopee'+(b.shp?' (Shopee na '+cronoCap(b.shp)+')':''));
     const add=(g,st,msg)=>out.push({g:g,st:st,t:t,o:o,msg:msg,txt:t.nome+' '+msg});
     if(o.st==='fora')        add(0,'fora','fora do ar: deveria estar '+alvo+' desde '+cronoHHMM(o.ini)+((o.nota&&o.nota.indexOf('nada no ar')<0)?' · '+o.nota:''));
     else if(o.st==='faltou') add(1,'faltou','não fez o bloco das '+faixa+(b.t==='gravada'?' (live gravada)':''));
-    else if(o.semShp && o.st==='aovivo') add(2,'shp','está no TikTok, mas o Shopee '+cronoCap(b.shp)+' não está no ar ('+faixa+')');
-    else if(o.semShp)        add(3,'shp','fez a live das '+faixa+' sem o Shopee '+cronoCap(b.shp));
+    else if(o.semShp && o.st==='aovivo') add(2,'shp','está no TikTok, mas o Shopee'+(b.shp?' ('+cronoCap(b.shp)+')':'')+' não está no ar ('+faixa+')');
+    else if(o.semShp)        add(3,'shp','fez a live das '+faixa+' sem o Shopee'+(b.shp?' ('+cronoCap(b.shp)+')':''));
     else if(o.st==='atrasou'||o.st==='parcial') add(3,o.st,faixa+': '+o.nota);
+    else if(o.shpOutra)      add(4,'shp','fez a live das '+faixa+' com o Shopee na '+o.shpOutra+' (era pra ser '+cronoCap(b.shp)+')');
   }));
   return out.sort((a,b)=>a.g-b.g || a.o.ini-b.o.ini);
 }
@@ -3910,8 +3921,8 @@ function renderCronograma(){
     const feitos=livesB.filter(o=>o.st==='ok'||o.st==='atrasou'||o.st==='aovivo').length;
     const blks=t.blocos.map(o=>{ if(o.ini==null||o.fim==null||o.fim<=o.ini) return '';
       const b=o.b;
-      const tipo=b.t==='live'?('Ao vivo'+(b.shp?' + Shopee '+cronoCap(b.shp):'')):b.t==='gravada'?'Live gravada':b.t==='ajuste'?'Ajuste sacolinha':(b.l||'Pausa');
-      const tip=cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim)+' · '+tipo+(ST[o.st]?' · '+ST[o.st]:'')+(o.nota?' · '+o.nota:'')+(o.semShp?' · Shopee '+cronoCap(b.shp)+' faltou':'')+((o.st==='ok'||o.st==='aovivo')&&o.real?' · '+o.real:'');
+      const tipo=b.t==='live'?('Ao vivo (TikTok + Shopee)'+(b.shp?' · Shopee na '+cronoCap(b.shp):'')):b.t==='gravada'?'Live gravada':b.t==='ajuste'?'Ajuste sacolinha':(b.l||'Pausa');
+      const tip=cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim)+' · '+tipo+(ST[o.st]?' · '+ST[o.st]:'')+(o.nota?' · '+o.nota:'')+(o.semShp?' · Shopee faltou':'')+(o.shpOutra?' · Shopee saiu na '+o.shpOutra+' (era pra ser '+cronoCap(b.shp)+')':'')+((o.st==='ok'||o.st==='aovivo')&&o.real?' · '+o.real:'');
       const w=pct(o.fim)-pct(o.ini);
       return '<div class="cr-blk t-'+b.t+' s-'+o.st+(o.semShp?' semshp':'')+'" style="left:'+pct(o.ini).toFixed(2)+'%;width:'+w.toFixed(2)+'%" title="'+ppEsc(tip)+'">'
         +(w>7?'<span>'+cronoHHMM(o.ini)+'</span>':'')+(b.shp&&b.t==='live'?'<i class="cr-shp"></i>':'')+'</div>';
@@ -3919,7 +3930,7 @@ function renderCronograma(){
     // faixa do REAL: lives da pessoa (TikTok), replays nos blocos de gravada e o Shopee das lojas cobradas
     const minhas=av.lives.filter(l=>l.mk==='tt' && ((t.pid && l.pids.indexOf(t.pid)>=0) || (l.pids.indexOf('__sem__')>=0 && t.blocos.some(o=>o.b.t==='gravada' && l.fim>o.ini && l.ini<o.fim))));
     const shpLojas=t.blocos.filter(o=>o.b.shp&&o.b.t==='live').map(o=>cronoNorm(o.b.shp));
-    const shps=av.lives.filter(l=>l.mk==='shp' && shpLojas.some(n=>l.loja.indexOf(n)>=0) && t.blocos.some(o=>o.b.shp&&o.b.t==='live'&&l.fim>o.ini&&l.ini<o.fim)); // só o Shopee dos blocos dessa pessoa
+    const shps=av.lives.filter(l=>l.mk==='shp' && ((t.pid && l.pids.indexOf(t.pid)>=0) || (shpLojas.some(n=>l.loja.indexOf(n)>=0) && t.blocos.some(o=>o.b.shp&&o.b.t==='live'&&l.fim>o.ini&&l.ini<o.fim)))); // Shopee dela (sigla) + a Monaco nos blocos em que ela segura a conta
     const seg=(l,cls,plat)=>'<div class="cr-real '+cls+(l.vivo?' vivo':'')+'" style="left:'+pct(l.ini).toFixed(2)+'%;width:'+Math.max(0.6,pct(l.fim)-pct(l.ini)).toFixed(2)+'%" title="'+ppEsc(plat+' · '+l.s.name+' · '+cronoHHMM(l.ini)+'–'+cronoHHMM(l.fim)+(l.vivo?' (ao vivo)':'')+' · '+(l.r.t||'sem título'))+'"></div>';
     const real=minhas.map(l=>seg(l,'tt','TikTok')).join('')+shps.map(l=>seg(l,'shp','Shopee')).join('');
     const now=(av.ehHoje && av.agora>=minI && av.agora<=maxF)?'<div class="cr-now" style="left:'+pct(av.agora).toFixed(2)+'%"></div>':'';
@@ -3928,7 +3939,7 @@ function renderCronograma(){
       +'<div class="cr-track"><div class="cr-lane cr-plan">'+blks+'</div><div class="cr-lane cr-done">'+real+'</div>'+now+'</div></div>';
   }).join('');
   el.innerHTML='<div class="cr-axis"><div class="cr-who"></div><div class="cr-track">'+ticks.join('')+'</div></div>'+rows
-    +'<div class="cr-legend"><span><i class="l-ok"></i>cumprido</span><span><i class="l-amb"></i>atrasou/parcial</span><span><i class="l-red"></i>faltou/fora do ar</span><span><i class="l-live"></i>ao vivo agora</span><span><i class="l-fut"></i>ainda vai</span><span><i class="l-real"></i>real TikTok</span><span><i class="l-realshp"></i>real Shopee</span></div>';
+    +'<div class="cr-legend"><span><i class="l-ok"></i>cumprido</span><span><i class="l-amb"></i>atrasou/parcial</span><span><i class="l-red"></i>faltou/fora do ar</span><span><i class="l-live"></i>ao vivo agora</span><span><i class="l-fut"></i>ainda vai</span><span><i class="l-real"></i>real TikTok</span><span><i class="l-realshp"></i>real Shopee</span><span><i class="l-mon"></i>segura o Shopee da Monaco</span></div>';
   const todos=[].concat.apply([],av.turnos.map(t=>t.blocos.filter(o=>o.b.t==='live'||o.b.t==='gravada')));
   const n=k=>todos.filter(o=>o.st===k).length;
   if(res) res.innerHTML=[['ok',n('ok'),'cumpridos'],['amb',n('atrasou')+n('parcial'),'com atraso'],['red',n('faltou')+n('fora'),'faltaram'],['live',n('aovivo'),'ao vivo agora'],['fut',n('futuro')+n('aguardando'),'ainda vão']]
@@ -3948,10 +3959,10 @@ function renderCronoLista(av,el,res,pr){
     const feitos=bl.filter(o=>o.st==='ok'||o.st==='atrasou'||o.st==='aovivo').length;
     const rows=bl.map(o=>{
       const b=o.b, agora=av.ehHoje && av.agora>=o.ini && av.agora<o.fim;
-      const tipo=b.t==='gravada'?'Live gravada':(TT+(b.shp?SH:'')+' Ao vivo');
-      const nota=[o.nota, ((o.st==='ok'||o.st==='aovivo')&&o.real?o.real:''), (o.semShp?'sem o Shopee '+cronoCap(b.shp):'')].filter(Boolean).join(' · ');
+      const tipo=b.t==='gravada'?'Live gravada':(TT+SH+' Ao vivo'+(b.shp?' · '+cronoCap(b.shp):''));
+      const nota=[o.nota, ((o.st==='ok'||o.st==='aovivo')&&o.real?o.real:''), (o.semShp?'sem o Shopee'+(b.shp?' ('+cronoCap(b.shp)+')':''):''), (o.shpOutra?'Shopee saiu na '+o.shpOutra+' (era pra ser '+cronoCap(b.shp)+')':'')].filter(Boolean).join(' · ');
       return '<div class="crm-row s-'+o.st+(agora?' agora':'')+'"><i class="dot"></i><span class="crm-h">'+cronoHHMM(o.ini)+'–'+cronoHHMM(o.fim)+'</span><span class="crm-t">'+tipo+'</span><span class="crm-s">'+(ST[o.st]||'')+'</span>'
-        +(nota?'<span class="crm-n'+((o.semShp||o.st==='atrasou'||o.st==='parcial'||o.st==='fora')?' ruim':'')+'">'+ppEsc(nota)+'</span>':'')+'</div>';
+        +(nota?'<span class="crm-n'+((o.semShp||o.shpOutra||o.st==='atrasou'||o.st==='parcial'||o.st==='fora')?' ruim':'')+'">'+ppEsc(nota)+'</span>':'')+'</div>';
     }).join('');
     return '<div class="crm-card"><div class="crm-head"><span class="cr-av" style="background:'+t.cor+'">'+ppEsc(t.nome.charAt(0).toUpperCase())+'</span><div class="cr-nm">'+ppEsc(t.nome)+(t.pid?'':'<span class="cr-warn" title="Não achei essa pessoa no cadastro (Pessoas)">?</span>')+'<span class="cr-sts">'+feitos+'/'+bl.length+' blocos</span></div></div>'+rows+'</div>';
   }).join('');
@@ -3980,7 +3991,7 @@ function renderCronoAlerta(av,probs){
 }
 
 // ── Editor (admin): pessoas, blocos, tolerância, dias ──
-const CR_TIPOS=[['live','Ao vivo (TikTok)'],['live_shp','Ao vivo + Shopee Monaco'],['gravada','Live gravada'],['ajuste','Ajuste sacolinha'],['pausa','Pausa / almoço']];
+const CR_TIPOS=[['live','Ao vivo (TikTok + Shopee)'],['live_shp','Ao vivo · segura o Shopee da Monaco'],['gravada','Live gravada'],['ajuste','Ajuste sacolinha'],['pausa','Pausa / almoço']];
 function crTipoDe(b){ return (b.t==='live'&&b.shp)?'live_shp':(b.t||'live'); }
 function crBlocoHtml(b){
   b=b||{i:'',f:'',t:'live'};
