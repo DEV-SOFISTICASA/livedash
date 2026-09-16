@@ -2081,9 +2081,9 @@ function liveUrls(s){
   if(!s) return out;
   var doze = 12*60*1000;
   var c = LIVE_CONTAS[s.cloudLoja] || {};
-  // 1º o @ que o robô achou sozinho no painel do TikTok (tts_meta:<loja>.tiktok);
-  // 2º o mapa fixo aqui embaixo, preenchido na mão
-  var conta = String(s.ttUser || c.tiktok || '').replace(/^@/, '').trim();
+  // 1º o @ CONFIRMADO no mapa aqui embaixo (voce viu no Gerenciador de LIVE);
+  // 2º o que o robo achou sozinho no painel do TikTok (tts_meta:<loja>.tiktok) — palpite, preenche o resto
+  var conta = String(c.tiktok || s.ttUser || '').replace(/^@/, '').trim();
   // TikTok: só quando a live do TikTok está no ar (loja antiga sem ultimoFimTT: vale o ultimoFim geral)
   var ttVivo = s.ultimoFimTT ? (Date.now()-s.ultimoFimTT < doze) : (!s.ultimoFimSHP && lojaAoVivo(s));
   if(conta && ttVivo) out.tt = 'https://www.tiktok.com/@'+encodeURIComponent(conta)+'/live';
