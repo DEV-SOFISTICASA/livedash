@@ -175,11 +175,17 @@ function shpParseLive(o, loja) {
   const ini = +o.startTime;
   if (!(ini > 1e12)) return null;
   const durMs = +o.duration || 0;
+  const agora = Date.now();
   let aoVivo = (o.status != null) ? (+o.status !== 2) : !durMs;
-  if (aoVivo && Date.now() - ini > 24 * 3600e3) aoVivo = false; // "no ar" ha 24h+ = dado podre
-  const fim = aoVivo ? Date.now() : (ini + durMs);
+  // a duracao so aparece quando a sessao fecha: se ela diz que a live terminaria ha mais de
+  // 10 min, acabou mesmo que o status ainda nao tenha virado (o realtime demora a atualizar)
+  if (aoVivo && durMs > 0 && ini + durMs < agora - 10 * 60e3) aoVivo = false;
+  if (aoVivo && ini > agora + 5 * 60e3) aoVivo = false;         // agendada pro futuro
+  if (aoVivo && agora - ini > 6 * 3600e3) aoVivo = false;       // "no ar" ha 6h+ = dado podre (era 24h)
+  const fim = aoVivo ? agora : (durMs > 0 ? ini + durMs : Math.min(agora, ini + 60e3));
   return {
     room_id: String(o.sessionId), loja, title: String(o.title || '(sem título)').slice(0, 160),
+    ao_vivo: aoVivo, dur_ms: durMs,   // usados no merge realtime x insight (nao vao pro painel)
     started_at: new Date(ini).toISOString(),
     finished_at: new Date(fim).toISOString(),
     duration_min: Math.max(1, Math.round((fim - ini) / 60000)),
@@ -282,6 +288,14 @@ async function coletarLojaShopee(loja, storageState) {
           ['views', 'likes', 'followers', 'comments', 'viewers', 'peak', 'avg_watch_s'].forEach((k) => {
             if (!m[k] && (antes[k] || l[k])) m[k] = antes[k] || l[k];
           });
+          // ENCERRADA vence: se qualquer uma das duas fontes ja sabe que a live fechou (tem
+          // duracao), o fim e o dela — senao o realtime atrasado segurava a loja "no ar".
+          const fechou = [l, antes].find((x) => x && x.ao_vivo === false && x.dur_ms > 0);
+          if (fechou) {
+            m.ao_vivo = false;
+            m.finished_at = fechou.finished_at;
+            m.duration_min = fechou.duration_min;
+          }
           porId.set(l.room_id, m);
         } else porId.set(l.room_id, l);
       });
@@ -333,7 +347,9 @@ async function gravarSupabase(prefixo, loja, colhidas) {
     if (mapa.has(l.room_id)) atualizadas++; else novas++;
     mapa.set(l.room_id, l);
   }
-  const lives = Array.from(mapa.values()).sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
+  const lives = Array.from(mapa.values())
+    .map((l) => { const c = Object.assign({}, l); delete c.ao_vivo; delete c.dur_ms; return c; })
+    .sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
 
   const payload = { _type: prefixo, loja, gerado_em: new Date().toISOString(), total: lives.length, lives };
   const r = await fetch(SB_URL + '/rest/v1/livedash_state', {
