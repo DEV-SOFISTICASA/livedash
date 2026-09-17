@@ -2117,6 +2117,58 @@ function liveUrls(s){
 function lvLinkAttrs(url, nome, plat, cls){
   return 'class="'+cls+'" href="'+url+'" target="_blank" rel="noopener" title="abrir a live de '+nome+' no '+plat+'" onclick="event.stopPropagation()"';
 }
+// Monta o selo AO VIVO a partir das opções de link (0 = selo simples, 1 = link direto, 2+ = menu)
+function lvSeloHtml(ops, nome, icones, tit){
+  var miolo = '<span class="lvdot"></span>'+(icones||'')+'<span class="lvtxt">AO VIVO</span>';
+  if(!ops.length) return '<span class="lvtag" title="'+tit+'">'+miolo+'</span>';
+  if(ops.length === 1) return '<a '+lvLinkAttrs(ops[0].url, nome, ops[0].plat, 'lvtag lvlink')+'>'+miolo+'</a>';
+  return '<span class="lvtag lvlink lvpick" title="'+tit+' — toque pra escolher onde abrir"'
+    + ' data-lvops="'+encodeURIComponent(JSON.stringify(ops))+'"'
+    + ' data-lvnome="'+String(nome).replace(/"/g,'&quot;')+'">'+miolo+'</span>';
+}
+// Opções de link de UMA loja que está no ar agora
+function lvOpcoesDaLoja(s, comNomeDaLoja){
+  var u = liveUrls(s), ops = [], sub = comNomeDaLoja ? (s && s.name) : '';
+  if(u.tt) ops.push({ url:u.tt, plat:'TikTok', dom:'tiktok.com', sub:sub });
+  if(u.shp) ops.push({ url:u.shp, plat:'Shopee', dom:'shopee.com.br', sub:sub });
+  return ops;
+}
+// Em que loja(s) esta pessoa está transmitindo agora (mesma conta de pessoasAoVivoIds)
+function lojasAoVivoDePessoa(pid){
+  var out = [];
+  try{
+    (STORES||[]).forEach(function(st){
+      if(!lojaAoVivo(st)) return;
+      var rooms = (st.aoVivoRooms && st.aoVivoRooms.length) ? st.aoVivoRooms : (st.aoVivoRoom!=null ? [st.aoVivoRoom] : []);
+      var dela = false;
+      rooms.forEach(function(rid){
+        var reg = (st.regs||[]).find(function(x){ return String(x.id)===String(rid); });
+        if(!reg) return;
+        var pids = (typeof resolveRespMulti==='function') ? resolveRespMulti(reg, st.id) : [];
+        if(!pids || !pids.length) pids = ['__sem__'];
+        if(pids.indexOf(pid) >= 0) dela = true;
+      });
+      if(dela) out.push(st);
+    });
+  }catch(e){}
+  return out;
+}
+// Selo da PESSOA (Alessandra, Giovanna, Taciana…): abre a live da loja em que ela está
+function lvTagPessoa(pid, nome){
+  var lojas = lojasAoVivoDePessoa(pid);
+  if(!lojas.length) return '';
+  var ops = [], doze = 12*60*1000, plats = {};
+  lojas.forEach(function(st){
+    lvOpcoesDaLoja(st, lojas.length > 1).forEach(function(o){ ops.push(o); });
+    if((st.ultimoFimTT||0) && Date.now()-st.ultimoFimTT < doze) plats['tiktok.com'] = 'TikTok';
+    if((st.ultimoFimSHP||0) && Date.now()-st.ultimoFimSHP < doze) plats['shopee.com.br'] = 'Shopee';
+  });
+  var icones = temMix() ? Object.keys(plats).map(function(d){
+    return '<img src="https://www.google.com/s2/favicons?domain='+d+'&sz=64" alt="'+plats[d]+'">';
+  }).join('') : '';
+  var onde = lojas.map(function(s){ return s.name; }).join(' · ');
+  return lvSeloHtml(ops, nome || 'ao vivo', icones, 'No ar agora em '+onde+' (dado do robô, até ~6 min)');
+}
 function lvTagHtml(s){
   // sem contagem de espectadores: o TikTok só dá o ACUMULADO, não o simultâneo — Gabriel mandou esquecer
   if(!lojaAoVivo(s))return '';
@@ -2131,26 +2183,20 @@ function lvTagHtml(s){
   var img = function(d){ return '<img src="https://www.google.com/s2/favicons?domain='+d.dom+'&sz=64" alt="'+d.plat+'">'; };
   var tit = 'Conta transmitindo agora (dado do robô, até ~6 min)';
   var principal = u.tt || u.shp, platP = u.tt ? 'TikTok' : 'Shopee';
-  if(u.tt && u.shp){
-    // ao vivo nas 2 plataformas: um toque no selo pergunta se é TikTok ou Shopee
-    return '<span class="lvtag lvlink lvpick" title="'+tit+' — toque pra escolher TikTok ou Shopee"'
-      + ' data-lvtt="'+u.tt+'" data-lvshp="'+u.shp+'" data-lvnome="'+String(nome).replace(/"/g,'&quot;')+'">'
-      + '<span class="lvdot"></span>'+ds.map(img).join('')+'<span class="lvtxt">AO VIVO</span></span>';
-  }
-  var miolo = '<span class="lvdot"></span>'+ds.map(img).join('')+'<span class="lvtxt">AO VIVO</span>';
-  if(!principal) return '<span class="lvtag" title="'+tit+'">'+miolo+'</span>'; // sem @ cadastrado: igual a antes
-  return '<a '+lvLinkAttrs(principal, nome, platP, 'lvtag lvlink')+'>'+miolo+'</a>';
+  return lvSeloHtml(lvOpcoesDaLoja(s, false), nome, ds.map(img).join(''), tit);
 }
 var LVMENU = null;
 function lvFecharMenu(){ if(LVMENU){ try{ LVMENU.remove(); }catch(e){} LVMENU = null; } }
-function lvAbrirMenu(el, nome, u){
+function lvAbrirMenu(el, nome, ops){
   lvFecharMenu();
   var IC = function(d, plat){ return '<img src="https://www.google.com/s2/favicons?domain='+d+'&sz=64" alt="'+plat+'">'; };
   var d = document.createElement('div');
   d.className = 'lvmenu';
   d.innerHTML = '<div class="lvm-t">abrir a live de '+nome+'</div>'
-    + (u.tt ? '<a href="'+u.tt+'" target="_blank" rel="noopener">'+IC('tiktok.com','TikTok')+'TikTok<small>ao vivo</small></a>' : '')
-    + (u.shp ? '<a href="'+u.shp+'" target="_blank" rel="noopener">'+IC('shopee.com.br','Shopee')+'Shopee<small>ao vivo</small></a>' : '');
+    + ops.map(function(o){
+        return '<a href="'+o.url+'" target="_blank" rel="noopener">'+IC(o.dom, o.plat)+o.plat
+          + '<small>'+(o.sub || 'ao vivo')+'</small></a>';
+      }).join('');
   document.body.appendChild(d);
   var r = el.getBoundingClientRect(), w = d.offsetWidth, hh = d.offsetHeight;
   var left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left));
@@ -2163,7 +2209,9 @@ document.addEventListener('click', function(e){
   var alvo = e.target.closest ? e.target.closest('.lvtag.lvpick') : null;
   if(alvo){
     e.preventDefault(); e.stopPropagation();   // não deixa o clique trocar a loja da lista
-    lvAbrirMenu(alvo, alvo.getAttribute('data-lvnome')||'loja', { tt: alvo.getAttribute('data-lvtt'), shp: alvo.getAttribute('data-lvshp') });
+    var ops = [];
+    try{ ops = JSON.parse(decodeURIComponent(alvo.getAttribute('data-lvops')||'[]')); }catch(err){ ops = []; }
+    if(ops.length) lvAbrirMenu(alvo, alvo.getAttribute('data-lvnome')||'loja', ops);
     return;
   }
   if(LVMENU && !(e.target.closest && e.target.closest('.lvmenu'))) lvFecharMenu();
@@ -3109,7 +3157,7 @@ function renderOvExtras(){
         return '<div class="ov-prow">'
           + '<div class="ov-phead">'
           +   '<div class="ov-pavatar" style="background:'+(p.cor?('linear-gradient(135deg,'+p.cor+',var(--accent))'):'var(--grad)')+'">'+ini+'</div>'
-          +   '<div><div class="ov-pname">'+p.nome+(pessoasAoVivoIds().has(p.id)?lvTagHtml({ultimoFim:Date.now()}):'')+'</div><div class="ov-psub">'+p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar</div></div>'
+          +   '<div><div class="ov-pname">'+p.nome+lvTagPessoa(p.id, p.nome)+'</div><div class="ov-psub">'+p.lives+' live'+(p.lives===1?'':'s')+' · '+fmtMinH(p.min)+' no ar</div></div>'
           +   '<div class="ov-pval"><div class="g">'+brl(p.gmv)+'</div>'
           +   ((typeof temMix==='function' && temMix() && ((p.gTT||0)>0||(p.gSHP||0)>0))
               ? '<div class="pmix">'+((p.gTT||0)>0?'<span><img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=tiktok.com&sz=64" alt="TikTok">'+brl(p.gTT)+'</span>':'')+((p.gSHP||0)>0?'<span><img class="ovs-mki" src="https://www.google.com/s2/favicons?domain=shopee.com.br&sz=64" alt="Shopee">'+brl(p.gSHP)+'</span>':'')+'</div>'
@@ -3126,7 +3174,7 @@ function renderOvExtras(){
         html += '<div class="ov-prow" style="cursor:pointer;border:1px solid rgba(245,158,11,.55);background:rgba(245,158,11,.08);border-radius:12px" onclick="openTagModal()" title="Shopee não tem live gravada — toque para atribuir a dona">'
           + '<div class="ov-phead">'
           + '<div class="ov-pavatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">!</div>'
-          + '<div><div class="ov-pname" style="color:#fbbf24">⚠ Sem sigla (Shopee)'+(pessoasAoVivoIds().has('__semshp__')?lvTagHtml({ultimoFim:Date.now()}):'')+'</div><div class="ov-psub">'+ssg.lives+' live'+(ssg.lives===1?'':'s')+' · '+fmtMinH(ssg.min)+' no ar · cobre a sigla no título!</div></div>'
+          + '<div><div class="ov-pname" style="color:#fbbf24">⚠ Sem sigla (Shopee)'+lvTagPessoa('__semshp__', 'quem está sem sigla')+'</div><div class="ov-psub">'+ssg.lives+' live'+(ssg.lives===1?'':'s')+' · '+fmtMinH(ssg.min)+' no ar · cobre a sigla no título!</div></div>'
           + '<div class="ov-pval"><div class="g">'+brl(ssg.gmv)+'</div><div class="p" style="color:#fbbf24">precisa de dona</div></div>'
           + '</div></div>';
       }
@@ -3136,7 +3184,7 @@ function renderOvExtras(){
         html += '<div class="ov-prow" style="cursor:pointer" onclick="openTagModal()" title="Toque para atribuir manualmente">'
           + '<div class="ov-phead">'
           + '<div class="ov-pavatar" style="background:var(--grad,linear-gradient(135deg,var(--accent),#ec4899))">' + IC('video') + '</div>'
-          + '<div><div class="ov-pname">Gravadas'+(pessoasAoVivoIds().has('__sem__')?lvTagHtml({ultimoFim:Date.now()}):'')+'</div><div class="ov-psub">'+grav.lives+' live'+(grav.lives===1?'':'s')+' · '+fmtMinH(grav.min)+' no ar · sem sigla</div></div>'
+          + '<div><div class="ov-pname">Gravadas'+lvTagPessoa('__sem__', 'live sem sigla')+'</div><div class="ov-psub">'+grav.lives+' live'+(grav.lives===1?'':'s')+' · '+fmtMinH(grav.min)+' no ar · sem sigla</div></div>'
           + '<div class="ov-pval"><div class="g">'+brl(grav.gmv)+'</div><div class="p">sem premiação</div></div>'
           + '</div></div>';
       }
@@ -3880,7 +3928,7 @@ function renderPorPessoa(){
       +'<div class="pp-head">'
         +'<span class="pp-av" style="background:'+p.cor+'">'+ppEsc(ini)+'</span>'
         +'<div class="pp-nome">'+ppEsc(p.nome)
-          +(p.aoVivo?lvTagHtml({ultimoFim:Date.now(),aoVivoViews:p.aoVivoViews||0}):'')
+          +(p.aoVivo?lvTagPessoa(p.id, p.nome):'')
           +'<span class="pp-sts">'+umMk+'<b>'+p.lives+'</b> live'+(p.lives>1?'s':'')
           +' · <b>'+fmtMinH(p.min)+'</b> no ar'+porHora+'</span></div>'
         +'<span class="pp-gmv">'+brl(p.gmv)+'</span>'
