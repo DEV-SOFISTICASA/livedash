@@ -2107,10 +2107,14 @@ function liveUrls(s){
   }
   var shpVivo = (s.ultimoFimSHP||0) && Date.now()-s.ultimoFimSHP < doze;
   if(shpVivo && s.aoVivoShp){
-    // live.shopee.com.br NÃO tem App Links (fica preso no navegador); quem abre o app é o
-    // universal-link do shopee.com.br, que delega ao com.shopee.br em TODOS os caminhos.
+    // live.shopee.com.br NÃO tem App Links (fica preso no navegador). O app abre QUALQUER link
+    // shopee.com.br, mas lá dentro precisa de um caminho que ele conheça — "/universal-link/middle-page"
+    // não é um (o app abria e dava 404, 18/09). O link abaixo é montado EXATAMENTE como o site da
+    // Shopee Live monta o dele (função Q do bundle de live.shopee.com.br): o universal-link leva o
+    // destino no parâmetro redir; o app abre o middle-page, que joga pro player da live.
+    var alvoShp = 'https://live.shopee.com.br/middle-page?type=live&id='+encodeURIComponent(s.aoVivoShp);
     out.shp = cel
-      ? 'https://shopee.com.br/universal-link/middle-page?type=live&id='+encodeURIComponent(s.aoVivoShp)+'&deep_and_deferred=1'
+      ? 'https://shopee.com.br/universal-link?redir='+encodeURIComponent(alvoShp)+'&deep_and_deferred=1'
       : 'https://live.shopee.com.br/p/share?from=live&session='+encodeURIComponent(s.aoVivoShp);
   }
   return out;
